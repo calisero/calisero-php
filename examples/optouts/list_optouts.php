@@ -42,7 +42,7 @@ try {
                 ? (\strlen($reason) > 40 ? substr($reason, 0, 40) . '...' : $reason)
                 : 'No reason provided';
 
-            echo sprintf(
+            echo \sprintf(
                 "  %d. 📱 %s [ID: %s]\n     📝 %s\n     ⏰ %s\n\n",
                 $index + 1,
                 $optOut->getPhone(),
