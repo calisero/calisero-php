@@ -1,0 +1,45 @@
+# Dependencies
+/vendor/
+
+# Build artifacts
+/build/
+/.phpunit.cache/
+.phpunit.result.cache
+
+# IDE files
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local configuration
+.env
+.env.local
+.env.*.local
+
+# Coverage reports
+/coverage/
+/coverage.xml
+clover.xml
+
+# Temporary files
+/tmp/
+*.tmp
+*.log
+
+# Ignore composer lock
+composer.lock
+
+# PHP CS Fixer cache
+/.php-cs-fixer.cache
+
+# PHPStan cache
+/phpstan.cache/
+
+# Ignore copilot instructions file
+vendor/copilot-instructions.md

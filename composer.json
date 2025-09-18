@@ -1,0 +1,58 @@
+{
+    "name": "calisero/calisero-php",
+    "type": "library",
+    "description": "Official PHP library for Calisero SMS API",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Calisero",
+            "email": "support@calisero.ro"
+        }
+    ],
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "guzzlehttp/guzzle": "^7.8 || ^7.9 || ^8.0",
+        "http-interop/http-factory-guzzle": "^1.2",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "php-http/discovery": "^1.19",
+        "phpunit/phpunit": "^9.6 || ^10.0",
+        "phpstan/phpstan": "^1.11",
+        "friendsofphp/php-cs-fixer": "^3.59"
+    },
+    "suggest": {
+        "php-http/discovery": "For additional HTTP client discovery capabilities"
+    },
+    "autoload": {
+        "psr-4": {
+            "Calisero\\Sms\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Calisero\\Sms\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "format": "php-cs-fixer fix --diff --ansi --verbose",
+        "lint": "php-cs-fixer fix --dry-run --diff --ansi --verbose",
+        "stan": "phpstan analyse --memory-limit=1G",
+        "test": "phpunit --colors=always --no-coverage",
+        "test-coverage": "phpunit --colors=always --coverage-html=coverage",
+        "qa": [
+            "composer validate --ansi",
+            "composer lint",
+            "composer stan",
+            "composer test"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
