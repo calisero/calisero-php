@@ -30,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated all code snippets to be standalone and immediately executable
 - Enhanced documentation formatting and organization for better readability
 
+### Fixed
+- HttpClient test suite compatibility issues with PHPUnit 10.5 and mock object handling
+- Test failures related to PSR-7 response body handling and exception interface mocking
+- Type compatibility issues in HTTP client tests for cross-version PHP support
+
 ## [1.0.2] - 2025-09-18
 
 ### Added

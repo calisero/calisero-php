@@ -18,6 +18,7 @@ use Calisero\Sms\Exceptions\ValidationException;
 use Calisero\Sms\Http\HttpClient;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -76,12 +77,14 @@ class HttpClientTest extends TestCase
             ->method('getToken')
             ->willReturn('test-bearer-token');
 
-        $request->expects($this->exactly(2))
+        $request->expects($this->exactly(3))
             ->method('withHeader')
             ->willReturnCallback(function ($name, $value) use ($request) {
-                $this->assertContains($name, ['Authorization', 'Accept']);
+                $this->assertContains($name, ['Authorization', 'User-Agent', 'Accept']);
                 if ($name === 'Authorization') {
                     $this->assertSame('Bearer test-bearer-token', $value);
+                } elseif ($name === 'User-Agent') {
+                    $this->assertSame('Calisero-PHP/1.0.0', $value);
                 } elseif ($name === 'Accept') {
                     $this->assertSame('application/json', $value);
                 }
@@ -103,7 +106,7 @@ class HttpClientTest extends TestCase
             ->willReturn($stream);
 
         $stream->expects($this->once())
-            ->method('getContents')
+            ->method('__toString')
             ->willReturn('{"data":{"id":"msg_123","body":"test"}}');
 
         $result = $this->client->get($path, $queryParams);
@@ -181,7 +184,7 @@ class HttpClientTest extends TestCase
             ->willReturn($stream);
 
         $stream->expects($this->once())
-            ->method('getContents')
+            ->method('__toString')
             ->willReturn('{"data":{"id":"msg_created","status":"pending"}}');
 
         $result = $this->client->post($path, $data, true);
@@ -207,15 +210,18 @@ class HttpClientTest extends TestCase
 
         $this->authProvider
             ->expects($this->once())
-            ->method('applyAuth')
-            ->with($request)
-            ->willReturn($request);
+            ->method('getToken')
+            ->willReturn('test-bearer-token');
 
-        $request->expects($this->exactly(2))
+        $request->expects($this->exactly(4))
             ->method('withHeader')
             ->willReturnCallback(function ($name, $value) use ($request) {
-                $this->assertContains($name, ['Accept', 'Content-Type']);
-                if ($name === 'Accept') {
+                $this->assertContains($name, ['Authorization', 'User-Agent', 'Accept', 'Content-Type']);
+                if ($name === 'Authorization') {
+                    $this->assertSame('Bearer test-bearer-token', $value);
+                } elseif ($name === 'User-Agent') {
+                    $this->assertSame('Calisero-PHP/1.0.0', $value);
+                } elseif ($name === 'Accept') {
                     $this->assertSame('application/json', $value);
                 } elseif ($name === 'Content-Type') {
                     $this->assertSame('application/json', $value);
@@ -249,7 +255,7 @@ class HttpClientTest extends TestCase
             ->willReturn($stream);
 
         $stream->expects($this->once())
-            ->method('getContents')
+            ->method('__toString')
             ->willReturn('{"data":{"id":"opt_123","reason":"Updated reason"}}');
 
         $result = $this->client->put($path, $data);
@@ -272,14 +278,22 @@ class HttpClientTest extends TestCase
 
         $this->authProvider
             ->expects($this->once())
-            ->method('applyAuth')
-            ->with($request)
-            ->willReturn($request);
+            ->method('getToken')
+            ->willReturn('test-bearer-token');
 
-        $request->expects($this->once())
+        $request->expects($this->exactly(3))
             ->method('withHeader')
-            ->with('Accept', 'application/json')
-            ->willReturn($request);
+            ->willReturnCallback(function ($name, $value) use ($request) {
+                $this->assertContains($name, ['Authorization', 'User-Agent', 'Accept']);
+                if ($name === 'Authorization') {
+                    $this->assertSame('Bearer test-bearer-token', $value);
+                } elseif ($name === 'User-Agent') {
+                    $this->assertSame('Calisero-PHP/1.0.0', $value);
+                } elseif ($name === 'Accept') {
+                    $this->assertSame('application/json', $value);
+                }
+                return $request;
+            });
 
         $this->httpClient
             ->expects($this->once())
@@ -368,18 +382,22 @@ class HttpClientTest extends TestCase
     public function testTransportExceptionOnHttpException(): void
     {
         $this->expectException(TransportException::class);
-        $this->expectExceptionMessage('Connection failed');
+        $this->expectExceptionMessage('HTTP request failed: Connection failed');
 
         $request = $this->createMock(RequestInterface::class);
 
         $this->requestFactory->method('createRequest')->willReturn($request);
-        $this->authProvider->method('applyAuth')->willReturn($request);
+        $this->authProvider->method('getToken')->willReturn('test-bearer-token');
         $request->method('withHeader')->willReturn($request);
+
+        // Create a test exception that implements ClientExceptionInterface
+        $clientException = new class('Connection failed') extends \RuntimeException implements ClientExceptionInterface {
+        };
 
         $this->httpClient
             ->expects($this->once())
             ->method('sendRequest')
-            ->willThrowException(new \Exception('Connection failed'));
+            ->willThrowException($clientException);
 
         $this->client->get('/messages');
     }
@@ -389,18 +407,35 @@ class HttpClientTest extends TestCase
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
         $stream = $this->createMock(StreamInterface::class);
+        $bodyStream = $this->createMock(StreamInterface::class);
 
         $this->requestFactory->method('createRequest')->willReturn($request);
-        $this->authProvider->method('applyAuth')->willReturn($request);
+        $this->authProvider->method('getToken')->willReturn('test-bearer-token');
+        
+        // Mock all possible withHeader calls to return the request
         $request->method('withHeader')->willReturn($request);
+        $request->method('withBody')->willReturn($request);
+        
+        // Mock stream factory for POST requests
+        $this->streamFactory->method('createStream')->willReturn($bodyStream);
 
         $this->httpClient->method('sendRequest')->willReturn($response);
 
         $response->method('getStatusCode')->willReturn($statusCode);
         $response->method('getBody')->willReturn($stream);
-        $stream->method('getContents')->willReturn(json_encode($errorData));
+        $stream->method('__toString')->willReturn(json_encode($errorData));
 
         $response->method('getHeader')->with('X-Request-ID')->willReturn(['req_123']);
+        $response->method('getHeaderLine')
+            ->willReturnCallback(function ($name) {
+                if ($name === 'X-Request-ID') {
+                    return 'req_123';
+                }
+                if ($name === 'Retry-After') {
+                    return '60';
+                }
+                return '';
+            });
     }
 
     public function testGetRequestWithoutQueryParams(): void
@@ -417,12 +452,12 @@ class HttpClientTest extends TestCase
             ->with('GET', 'https://rest.calisero.ro/v1/accounts/acc_123')
             ->willReturn($request);
 
-        $this->authProvider->method('applyAuth')->willReturn($request);
+        $this->authProvider->method('getToken')->willReturn('test-bearer-token');
         $request->method('withHeader')->willReturn($request);
         $this->httpClient->method('sendRequest')->willReturn($response);
         $response->method('getStatusCode')->willReturn(200);
         $response->method('getBody')->willReturn($stream);
-        $stream->method('getContents')->willReturn('{"data":{"id":"acc_123"}}');
+        $stream->method('__toString')->willReturn('{"data":{"id":"acc_123"}}');
 
         $result = $this->client->get($path);
 
@@ -440,13 +475,17 @@ class HttpClientTest extends TestCase
         $bodyStream = $this->createMock(StreamInterface::class);
 
         $this->requestFactory->method('createRequest')->willReturn($request);
-        $this->authProvider->method('applyAuth')->willReturn($request);
+        $this->authProvider->method('getToken')->willReturn('test-bearer-token');
 
-        $request->expects($this->exactly(2))
+        $request->expects($this->exactly(4))
             ->method('withHeader')
             ->willReturnCallback(function ($name, $value) use ($request) {
-                $this->assertContains($name, ['Accept', 'Content-Type']);
-                if ($name === 'Accept') {
+                $this->assertContains($name, ['Authorization', 'User-Agent', 'Accept', 'Content-Type']);
+                if ($name === 'Authorization') {
+                    $this->assertSame('Bearer test-bearer-token', $value);
+                } elseif ($name === 'User-Agent') {
+                    $this->assertSame('Calisero-PHP/1.0.0', $value);
+                } elseif ($name === 'Accept') {
                     $this->assertSame('application/json', $value);
                 } elseif ($name === 'Content-Type') {
                     $this->assertSame('application/json', $value);
@@ -459,7 +498,7 @@ class HttpClientTest extends TestCase
         $this->httpClient->method('sendRequest')->willReturn($response);
         $response->method('getStatusCode')->willReturn(201);
         $response->method('getBody')->willReturn($stream);
-        $stream->method('getContents')->willReturn('{"data":{"id":"opt_123"}}');
+        $stream->method('__toString')->willReturn('{"data":{"id":"opt_123"}}');
 
         $result = $this->client->post($path, $data, false);
 
