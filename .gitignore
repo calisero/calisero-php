@@ -42,4 +42,4 @@ composer.lock
 /phpstan.cache/
 
 # Ignore copilot instructions file
-vendor/copilot-instructions.md
+/.github/copilot-instructions.md

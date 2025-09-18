@@ -84,8 +84,10 @@ class HttpClient
         if (!empty($data)) {
             $jsonData = json_encode($data, JSON_THROW_ON_ERROR);
             $stream = $this->streamFactory->createStream($jsonData);
-            $request = $request->withBody($stream);
-            $request = $request->withHeader('Content-Type', 'application/json');
+
+            /** @var RequestInterface $request */
+            $request = $request->withBody($stream)
+                ->withHeader('Content-Type', 'application/json');
         }
 
         return $this->sendRequest($request);
@@ -107,8 +109,10 @@ class HttpClient
         if (!empty($data)) {
             $jsonData = json_encode($data, JSON_THROW_ON_ERROR);
             $stream = $this->streamFactory->createStream($jsonData);
-            $request = $request->withBody($stream);
-            $request = $request->withHeader('Content-Type', 'application/json');
+
+            /** @var RequestInterface $request */
+            $request = $request->withBody($stream)
+                ->withHeader('Content-Type', 'application/json');
         }
 
         return $this->sendRequest($request);
@@ -146,11 +150,17 @@ class HttpClient
 
     private function addHeaders(RequestInterface $request, bool $useIdempotency = false): RequestInterface
     {
+        /** @var RequestInterface $request */
         $request = $request->withHeader('Authorization', 'Bearer ' . $this->authProvider->getToken());
+
+        /** @var RequestInterface $request */
         $request = $request->withHeader('User-Agent', self::USER_AGENT);
+
+        /** @var RequestInterface $request */
         $request = $request->withHeader('Accept', 'application/json');
 
         if ($useIdempotency && $this->idempotencyKeyProvider !== null) {
+            /** @var RequestInterface $request */
             $request = $request->withHeader('Idempotency-Key', $this->idempotencyKeyProvider->generate());
         }
 
