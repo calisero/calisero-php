@@ -5,19 +5,26 @@ All notable changes to `calisero-php` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.1] - 2025-09-18
+## [1.0.2] - 2025-09-18
 
 ### Added
-- Comprehensive unit test suite covering all API endpoints (57 tests, 276 assertions)
+- Comprehensive unit test suite covering all API endpoints (114 tests, 552 assertions)
 - Complete test coverage for MessageService (create, get, list, delete operations)
 - Complete test coverage for OptOutService (CRUD operations for GDPR compliance)
 - Complete test coverage for AccountService (account information retrieval)
 - Unit tests for SmsClient and factory methods with various configurations
-- - Test documentation in TESTING.md with 114 tests and 552 assertions
+- Test documentation in TESTING.md with detailed coverage overview
+
+### Changed
+- PHPUnit configuration updated for cross-version compatibility (9.6 and 10.5)
 
 ### Fixed
 - PHP CS Fixer cross-version compatibility issues with native_function_invocation rule
 - Resolved code formatting inconsistencies across PHP 7.4-8.4 environments
+- PHP 7.4 compatibility issues with intersection types in tests (converted to PHPDoc annotations)
+- PHP 7.4 compatibility issues with `mixed` type hints in closures (removed for broad compatibility)
+- PHPUnit configuration compatibility between versions 9.6 and 10.5
+- GitHub CI/CD pipeline failures due to environment differences
 
 ## [1.0.1] - 2025-09-18
 
