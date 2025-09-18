@@ -36,7 +36,7 @@ class PaginatedOptOuts
         \assert(\is_array($response['meta']));
 
         $optOuts = \array_map(
-            static function (mixed $optOutData): OptOut {
+            static function ($optOutData): OptOut {
                 \assert(\is_array($optOutData));
 
                 return OptOut::fromArray($optOutData);
