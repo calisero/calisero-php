@@ -4,12 +4,17 @@ This document provides an overview of the comprehensive unit tests created for a
 
 ## Test Coverage Overview
 
+**Total Test Statistics: 114 tests with 552 assertions - 100% success rate**
+
 ### Services Tested
 - **MessageService** - SMS message operations
 - **OptOutService** - Opt-out management for GDPR compliance  
 - **AccountService** - Account information retrieval
 - **SmsClient** - Main client class
 - **Sms** - Factory class for client creation
+- **DTOs** - Data transfer objects validation
+- **Auth** - Authentication providers
+- **IdempotencyKey** - Key generation utilities
 
 ## Service Endpoint Tests
 

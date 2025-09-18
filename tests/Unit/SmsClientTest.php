@@ -18,11 +18,20 @@ use Psr\Http\Message\StreamFactoryInterface;
 
 class SmsClientTest extends TestCase
 {
-    private HttpClientInterface&MockObject $httpClient;
-    private MockObject&RequestFactoryInterface $requestFactory;
-    private MockObject&StreamFactoryInterface $streamFactory;
-    private AuthProviderInterface&MockObject $authProvider;
-    private IdempotencyKeyProviderInterface&MockObject $idempotencyKeyProvider;
+    /** @var HttpClientInterface&MockObject */
+    private $httpClient;
+
+    /** @var MockObject&RequestFactoryInterface */
+    private $requestFactory;
+
+    /** @var MockObject&StreamFactoryInterface */
+    private $streamFactory;
+
+    /** @var AuthProviderInterface&MockObject */
+    private $authProvider;
+
+    /** @var IdempotencyKeyProviderInterface&MockObject */
+    private $idempotencyKeyProvider;
 
     protected function setUp(): void
     {

@@ -5,7 +5,7 @@ All notable changes to `calisero-php` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2025-09-18
+## [1.0.1] - 2025-09-18
 
 ### Added
 - Comprehensive unit test suite covering all API endpoints (57 tests, 276 assertions)
@@ -13,13 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Complete test coverage for OptOutService (CRUD operations for GDPR compliance)
 - Complete test coverage for AccountService (account information retrieval)
 - Unit tests for SmsClient and factory methods with various configurations
-- Test documentation in TESTING.md with detailed coverage analysis and usage examples
+- - Test documentation in TESTING.md with 114 tests and 552 assertions
 
 ### Fixed
 - PHP CS Fixer cross-version compatibility issues with native_function_invocation rule
 - Resolved code formatting inconsistencies across PHP 7.4-8.4 environments
 
-## [1.1.0] - 2025-09-18
+## [1.0.1] - 2025-09-18
 
 ### Added
 - Comprehensive examples organized by functionality

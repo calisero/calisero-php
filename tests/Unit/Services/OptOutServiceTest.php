@@ -19,7 +19,8 @@ use PHPUnit\Framework\TestCase;
 
 class OptOutServiceTest extends TestCase
 {
-    private HttpClient&MockObject $httpClient;
+    /** @var HttpClient&MockObject */
+    private $httpClient;
     private OptOutService $optOutService;
 
     protected function setUp(): void

@@ -13,7 +13,8 @@ use PHPUnit\Framework\TestCase;
 
 class AccountServiceTest extends TestCase
 {
-    private HttpClient&MockObject $httpClient;
+    /** @var HttpClient&MockObject */
+    private $httpClient;
     private AccountService $accountService;
 
     protected function setUp(): void

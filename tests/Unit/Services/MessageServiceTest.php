@@ -18,7 +18,8 @@ use PHPUnit\Framework\TestCase;
 
 class MessageServiceTest extends TestCase
 {
-    private HttpClient&MockObject $httpClient;
+    /** @var HttpClient&MockObject */
+    private $httpClient;
     private MessageService $messageService;
 
     protected function setUp(): void
