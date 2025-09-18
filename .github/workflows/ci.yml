@@ -140,10 +140,7 @@ jobs:
 
       - name: Test examples syntax
         run: |
-          for example in examples/*.php; do
-            echo "Checking syntax of $example"
-            php -l "$example"
-          done
+          find examples -name "*.php" -exec php -l {} \;
 
   minimum-php:
     name: Minimum PHP Version Support

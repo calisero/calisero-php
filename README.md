@@ -7,18 +7,21 @@
 [![Tests](https://img.shields.io/github/actions/workflow/status/calisero/calisero-php/ci.yml?branch=main&label=tests&style=flat-square)](https://github.com/calisero/calisero-php/actions/workflows/ci.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/calisero/calisero-php.svg?style=flat-square)](https://packagist.org/packages/calisero/calisero-php)
 
-Official PHP library for the [Calisero](https://calisero.ro) transactional SMS API.
+**Official PHP library for the [Calisero](https://calisero.ro) transactional SMS API.**
+
+Send SMS messages, manage opt-outs for GDPR compliance, and monitor your account—all with a simple, type-safe PHP library that just works.
 
 ## Features
 
 - 🚀 **Simple & Intuitive**: Easy-to-use API with clean factory methods
-- 🔒 **Type Safe**: Full PHP type declarations and PHPStan level 9 compliance
+- 🔒 **Type Safe**: Full PHP type declarations and PHPStan level 9 compliance  
 - 🌐 **HTTP Client Included**: Uses reliable Guzzle HTTP client out of the box
 - 🔄 **Idempotency**: Built-in idempotency key generation for safe retries
 - 📱 **Complete API Coverage**: All Calisero SMS API endpoints supported
 - 🛡️ **Error Handling**: Comprehensive exception hierarchy for different error types
-- 📖 **Well Documented**: Extensive documentation and examples
+- 📖 **Rich Examples**: 14+ working examples covering every use case
 - ⚡ **Zero Configuration**: Works immediately after installation
+- 🏗️ **Production Ready**: Used in production by businesses worldwide
 
 ## Requirements
 
@@ -36,6 +39,30 @@ composer require calisero/calisero-php
 
 The library uses Guzzle HTTP client and includes all necessary dependencies automatically.
 
+## Getting Your API Key
+
+To use this library, you'll need an API key from your Calisero account:
+
+1. **Log in to your Calisero account** at [https://calisero.ro](https://calisero.ro)
+2. **Navigate to the dashboard** and go to the **"API Keys"** section
+3. **Click "Add Key"** to create a new API key
+4. **Configure your key:**
+   - Give it a descriptive name (e.g., "Production App", "Development")
+   - Set IP filters if needed for additional security
+   - Choose appropriate permissions
+5. **Copy your API key** and store it securely
+
+### API Key Management
+
+From the API Keys section in your dashboard, you can:
+- ✅ **Add new keys** for different applications or environments
+- ✏️ **Edit existing keys** to update names or permissions
+- 🗑️ **Delete keys** that are no longer needed
+- 🛡️ **Add IP filters** to restrict key usage to specific IP addresses
+- 📊 **Monitor key usage** and activity logs
+
+> **Security Note**: Never commit API keys to version control. Use environment variables or secure configuration files.
+
 ## Quick Start
 
 ### Basic Usage
@@ -43,17 +70,72 @@ The library uses Guzzle HTTP client and includes all necessary dependencies auto
 ```php
 use Calisero\Sms\Sms;
 
-// Create a client
-$client = Sms::client('your-api-token');
+// Create a client with your API key
+$client = Sms::client('your-api-key-here');
 
 // Send a simple SMS
 $request = new \Calisero\Sms\Dto\CreateMessageRequest(
-    to: '+40742***350',
-    from: 'Calisero',
+    recipient: '+40742***350',
+    sender: 'CALISEOR',
     body: 'Hello from Calisero!'
 );
 
 $response = $client->messages()->create($request);
+```
+
+### Environment Configuration
+
+For production applications, store your API key securely:
+
+```bash
+# .env file
+CALISERO_API_KEY=your-api-key-here
+```
+
+```php
+// In your application
+$client = Sms::client($_ENV['CALISERO_API_KEY']);
+```
+
+## 🎯 Common Use Cases
+
+### OTP/2FA Authentication
+```php
+$request = new CreateMessageRequest(
+    recipient: $userPhoneNumber,
+    body: "Your verification code is: AC3-4F6. Valid for 5 minutes.",
+    visibleBody: "Your verification code is: ******. Valid for 5 minutes.",
+    validity: 1, // 1 hour validity
+    sender: 'YourApp'
+);
+$response = $client->messages()->create($request);
+```
+
+### Order Notifications
+```php
+$request = new CreateMessageRequest(
+    recipient: $customerPhone,
+    body: "Order #{$orderNumber} confirmed! Estimated delivery: {$deliveryDate}",
+    callbackUrl: "https://yourstore.com/webhooks/sms/dlr",
+    sender: 'YourStore'
+);
+```
+
+### Marketing Campaigns with Opt-out Compliance
+```php
+// Check if user is opted out first
+try {
+    $client->optOuts()->get($phoneNumber);
+    echo "User is opted out, skipping message";
+} catch (NotFoundException $e) {
+    // User is not opted out, safe to send
+    $request = new CreateMessageRequest(
+        recipient: $phoneNumber,
+        body: "Special offer! Get 20% off with code SAVE20. Reply STOP to opt out.",
+        sender: 'YourBrand'
+    );
+    $client->messages()->create($request);
+}
 ```
 
 ### Advanced Message Creation
@@ -64,11 +146,11 @@ use Calisero\Sms\Dto\CreateMessageRequest;
 $request = new CreateMessageRequest(
     recipient: '+40742***350',
     body: 'Your verification code is: 123456',
-    visibleBody: 'Your verification code is: ******', // For logs/display
-    validity: 24,                                     // 24 hours validity
-    scheduleAt: '2024-12-25 10:00:00',               // Schedule for later
-    callbackUrl: 'https://yoursite.com/webhook',     // Delivery reports
-    sender: 'Calisero'                                // Custom sender
+    visibleBody: 'Your verification code is: ******',       // For logs/display
+    validity: 24,                                           // 24 hours validity
+    scheduleAt: '2024-12-25 10:00:00',                      // Schedule for later
+    callbackUrl: 'https://yoursite.com/webhook',            // Delivery reports
+    sender: 'Calisero'                                      // Custom sender
 );
 
 $response = $client->messages()->create($request);
@@ -76,12 +158,12 @@ $response = $client->messages()->create($request);
 
 ## Authentication
 
-### Using Bearer Token
+### Using API Key (Bearer Token)
 
 ```php
 use Calisero\Sms\Sms;
 
-$client = Sms::client('your-bearer-token');
+$client = Sms::client('your-api-key-here');
 ```
 
 ### Custom Authentication Provider
@@ -108,6 +190,53 @@ $client = new SmsClient(
     $authProvider
 );
 ```
+
+## 📚 Examples
+
+This library includes comprehensive examples for all operations. Check the [`examples/`](examples/) directory for detailed usage patterns:
+
+### 📱 Message Examples
+- **[`examples/messages/send_simple_sms.php`](examples/messages/send_simple_sms.php)** - Send basic SMS messages
+- **[`examples/messages/send_advanced_sms.php`](examples/messages/send_advanced_sms.php)** - Advanced SMS with scheduling, callbacks, custom sender
+- **[`examples/messages/send_bulk_sms.php`](examples/messages/send_bulk_sms.php)** - Bulk SMS with rate limiting and error handling
+- **[`examples/messages/get_sms.php`](examples/messages/get_sms.php)** - Retrieve message details and status
+- **[`examples/messages/list_sms.php`](examples/messages/list_sms.php)** - List messages with pagination
+- **[`examples/messages/delete_sms.php`](examples/messages/delete_sms.php)** - Cancel scheduled messages
+
+### 🚫 OptOut Examples (GDPR Compliance)
+- **[`examples/optouts/create_optout.php`](examples/optouts/create_optout.php)** - Add phone numbers to opt-out list
+- **[`examples/optouts/get_optout.php`](examples/optouts/get_optout.php)** - Check opt-out status
+- **[`examples/optouts/list_optouts.php`](examples/optouts/list_optouts.php)** - List all opt-outs with pagination
+- **[`examples/optouts/update_optout.php`](examples/optouts/update_optout.php)** - Update opt-out reasons
+- **[`examples/optouts/delete_optout.php`](examples/optouts/delete_optout.php)** - Remove opt-out (re-enable SMS)
+
+### 👤 Account Examples
+- **[`examples/account/get_account.php`](examples/account/get_account.php)** - Get account information and details
+- **[`examples/account/check_balance.php`](examples/account/check_balance.php)** - Check balance with analysis and recommendations
+
+### 🛡️ Error Handling
+- **[`examples/error_handling_complete.php`](examples/error_handling_complete.php)** - Comprehensive error handling for all exception types
+
+### 🚀 Running Examples
+
+1. Clone this repository and install dependencies:
+   ```bash
+   git clone https://github.com/calisero/calisero-php.git
+   cd calisero-php
+   composer install
+   ```
+
+2. Set your API key in any example file:
+   ```php
+   $bearerToken = 'your-api-key-here'; // Replace with your actual API key
+   ```
+
+3. Run an example:
+   ```bash
+   php examples/messages/send_simple_sms.php
+   ```
+
+> **Note**: Examples use masked phone numbers (`+40742***350`) for security. Replace with actual phone numbers when testing.
 
 ## API Reference
 
@@ -315,24 +444,7 @@ $client = Sms::client(
     options: [
         'timeout' => 60,
         'connect_timeout' => 10,
-        'proxy' => 'http://proxy.example.com:8080'
     ]
-);
-```
-
-### Custom Base URI
-
-```php
-// For sandbox testing
-$client = Sms::client(
-    bearerToken: 'your-sandbox-token',
-    baseUri: 'https://sandbox.calisero.ro/api/v1'
-);
-
-// For custom API endpoints
-$client = Sms::client(
-    bearerToken: 'your-token',
-    baseUri: 'https://api.custom-endpoint.com/v1'
 );
 ```
 
