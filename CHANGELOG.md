@@ -5,6 +5,20 @@ All notable changes to `calisero-php` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-09-18
+
+### Added
+- Comprehensive unit test suite covering all API endpoints (57 tests, 276 assertions)
+- Complete test coverage for MessageService (create, get, list, delete operations)
+- Complete test coverage for OptOutService (CRUD operations for GDPR compliance)
+- Complete test coverage for AccountService (account information retrieval)
+- Unit tests for SmsClient and factory methods with various configurations
+- Test documentation in TESTING.md with detailed coverage analysis and usage examples
+
+### Fixed
+- PHP CS Fixer cross-version compatibility issues with native_function_invocation rule
+- Resolved code formatting inconsistencies across PHP 7.4-8.4 environments
+
 ## [1.1.0] - 2025-09-18
 
 ### Added
@@ -30,12 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved PSR-7 v2.0 compatibility issues by requiring Guzzle directly
 - Fixed PHPStan type errors in HttpClient class
 - Corrected GitHub Actions workflow for better CI/CD reliability
+- Code formatting issues fixed with PHP-CS-Fixer
 
 ### Improved
 - Enhanced error handling with specific exception types and detailed error messages
 - Better documentation with practical examples for all API operations
 - Improved testing coverage with examples syntax validation in CI
 - Added comprehensive API surface documentation through examples
+- Code styling and formatting in examples for readability
 
 ## [1.0.0] - 2025-09-18
 
