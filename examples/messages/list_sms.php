@@ -36,8 +36,8 @@ try {
 
     if (\count($messages) > 0) {
         echo "📝 Recent messages:\n";
-        foreach (\array_slice($messages, 0, 5) as $index => $message) {
-            echo \sprintf(
+        foreach (array_slice($messages, 0, 5) as $index => $message) {
+            echo sprintf(
                 "  %d. 📨 %s -> %s: %s [%s]\n",
                 $index + 1,
                 $message->getId(),
