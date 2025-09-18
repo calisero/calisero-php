@@ -29,12 +29,16 @@ class HttpClientTest extends TestCase
 {
     /** @var HttpClientInterface&MockObject */
     private $httpClient;
-    /** @var RequestFactoryInterface&MockObject */
+
+    /** @var MockObject&RequestFactoryInterface */
     private $requestFactory;
-    /** @var StreamFactoryInterface&MockObject */
+
+    /** @var MockObject&StreamFactoryInterface */
     private $streamFactory;
+
     /** @var AuthProviderInterface&MockObject */
     private $authProvider;
+
     /** @var IdempotencyKeyProviderInterface&MockObject */
     private $idempotencyKeyProvider;
     private HttpClient $client;
@@ -61,7 +65,7 @@ class HttpClientTest extends TestCase
     {
         $path = '/messages';
         $queryParams = ['page' => 2];
-        
+
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
         $stream = $this->createMock(StreamInterface::class);
@@ -88,6 +92,7 @@ class HttpClientTest extends TestCase
                 } elseif ($name === 'Accept') {
                     $this->assertSame('application/json', $value);
                 }
+
                 return $request;
             });
 
@@ -118,7 +123,7 @@ class HttpClientTest extends TestCase
     {
         $path = '/messages';
         $data = ['recipient' => '+40742123456', 'body' => 'Test message'];
-        
+
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
         $stream = $this->createMock(StreamInterface::class);
@@ -155,6 +160,7 @@ class HttpClientTest extends TestCase
                 } elseif ($name === 'Idempotency-Key') {
                     $this->assertSame('idempotency-key-123', $value);
                 }
+
                 return $request;
             });
 
@@ -196,7 +202,7 @@ class HttpClientTest extends TestCase
     {
         $path = '/opt-outs/opt_123';
         $data = ['reason' => 'Updated reason'];
-        
+
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
         $stream = $this->createMock(StreamInterface::class);
@@ -226,6 +232,7 @@ class HttpClientTest extends TestCase
                 } elseif ($name === 'Content-Type') {
                     $this->assertSame('application/json', $value);
                 }
+
                 return $request;
             });
 
@@ -266,7 +273,7 @@ class HttpClientTest extends TestCase
     public function testDeleteRequest(): void
     {
         $path = '/messages/msg_123';
-        
+
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
 
@@ -292,6 +299,7 @@ class HttpClientTest extends TestCase
                 } elseif ($name === 'Accept') {
                     $this->assertSame('application/json', $value);
                 }
+
                 return $request;
             });
 
@@ -391,8 +399,7 @@ class HttpClientTest extends TestCase
         $request->method('withHeader')->willReturn($request);
 
         // Create a test exception that implements ClientExceptionInterface
-        $clientException = new class('Connection failed') extends \RuntimeException implements ClientExceptionInterface {
-        };
+        $clientException = new class('Connection failed') extends \RuntimeException implements ClientExceptionInterface {};
 
         $this->httpClient
             ->expects($this->once())
@@ -402,46 +409,10 @@ class HttpClientTest extends TestCase
         $this->client->get('/messages');
     }
 
-    private function setupErrorResponse(int $statusCode, array $errorData): void
-    {
-        $request = $this->createMock(RequestInterface::class);
-        $response = $this->createMock(ResponseInterface::class);
-        $stream = $this->createMock(StreamInterface::class);
-        $bodyStream = $this->createMock(StreamInterface::class);
-
-        $this->requestFactory->method('createRequest')->willReturn($request);
-        $this->authProvider->method('getToken')->willReturn('test-bearer-token');
-        
-        // Mock all possible withHeader calls to return the request
-        $request->method('withHeader')->willReturn($request);
-        $request->method('withBody')->willReturn($request);
-        
-        // Mock stream factory for POST requests
-        $this->streamFactory->method('createStream')->willReturn($bodyStream);
-
-        $this->httpClient->method('sendRequest')->willReturn($response);
-
-        $response->method('getStatusCode')->willReturn($statusCode);
-        $response->method('getBody')->willReturn($stream);
-        $stream->method('__toString')->willReturn(json_encode($errorData));
-
-        $response->method('getHeader')->with('X-Request-ID')->willReturn(['req_123']);
-        $response->method('getHeaderLine')
-            ->willReturnCallback(function ($name) {
-                if ($name === 'X-Request-ID') {
-                    return 'req_123';
-                }
-                if ($name === 'Retry-After') {
-                    return '60';
-                }
-                return '';
-            });
-    }
-
     public function testGetRequestWithoutQueryParams(): void
     {
         $path = '/accounts/acc_123';
-        
+
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
         $stream = $this->createMock(StreamInterface::class);
@@ -468,7 +439,7 @@ class HttpClientTest extends TestCase
     {
         $path = '/opt-outs';
         $data = ['phone' => '+40742123456', 'reason' => 'Test opt-out'];
-        
+
         $request = $this->createMock(RequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
         $stream = $this->createMock(StreamInterface::class);
@@ -490,6 +461,7 @@ class HttpClientTest extends TestCase
                 } elseif ($name === 'Content-Type') {
                     $this->assertSame('application/json', $value);
                 }
+
                 return $request;
             });
 
@@ -503,5 +475,42 @@ class HttpClientTest extends TestCase
         $result = $this->client->post($path, $data, false);
 
         $this->assertSame(['data' => ['id' => 'opt_123']], $result);
+    }
+
+    private function setupErrorResponse(int $statusCode, array $errorData): void
+    {
+        $request = $this->createMock(RequestInterface::class);
+        $response = $this->createMock(ResponseInterface::class);
+        $stream = $this->createMock(StreamInterface::class);
+        $bodyStream = $this->createMock(StreamInterface::class);
+
+        $this->requestFactory->method('createRequest')->willReturn($request);
+        $this->authProvider->method('getToken')->willReturn('test-bearer-token');
+
+        // Mock all possible withHeader calls to return the request
+        $request->method('withHeader')->willReturn($request);
+        $request->method('withBody')->willReturn($request);
+
+        // Mock stream factory for POST requests
+        $this->streamFactory->method('createStream')->willReturn($bodyStream);
+
+        $this->httpClient->method('sendRequest')->willReturn($response);
+
+        $response->method('getStatusCode')->willReturn($statusCode);
+        $response->method('getBody')->willReturn($stream);
+        $stream->method('__toString')->willReturn(json_encode($errorData));
+
+        $response->method('getHeader')->with('X-Request-ID')->willReturn(['req_123']);
+        $response->method('getHeaderLine')
+            ->willReturnCallback(function ($name) {
+                if ($name === 'X-Request-ID') {
+                    return 'req_123';
+                }
+                if ($name === 'Retry-After') {
+                    return '60';
+                }
+
+                return '';
+            });
     }
 }
