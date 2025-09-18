@@ -28,27 +28,27 @@ try {
     $links = $response->getLinks();
 
     echo "✅ Messages listed successfully!\n";
-    echo '📊 Messages on this page: ' . \count($messages) . "\n";
+    echo '📊 Messages on this page: ' . count($messages) . "\n";
     echo "📄 Current page: {$meta->getCurrentPage()}\n";
     echo "📄 Per page: {$meta->getPerPage()}\n";
     echo '📄 From record: ' . ($meta->getFrom() ?? 'N/A') . "\n";
     echo '📄 To record: ' . ($meta->getTo() ?? 'N/A') . "\n\n";
 
-    if (\count($messages) > 0) {
+    if (count($messages) > 0) {
         echo "📝 Recent messages:\n";
-        foreach (\array_slice($messages, 0, 5) as $index => $message) {
-            echo \sprintf(
+        foreach (array_slice($messages, 0, 5) as $index => $message) {
+            echo sprintf(
                 "  %d. 📨 %s -> %s: %s [%s]\n",
                 $index + 1,
                 $message->getId(),
                 $message->getRecipient(),
-                substr($message->getBody(), 0, 30) . (\strlen($message->getBody()) > 30 ? '...' : ''),
+                substr($message->getBody(), 0, 30) . (strlen($message->getBody()) > 30 ? '...' : ''),
                 $message->getStatus()
             );
         }
 
-        if (\count($messages) > 5) {
-            echo '  ... and ' . (\count($messages) - 5) . " more messages\n";
+        if (count($messages) > 5) {
+            echo '  ... and ' . (count($messages) - 5) . " more messages\n";
         }
     } else {
         echo "📭 No messages found\n";
@@ -65,7 +65,7 @@ try {
     if ($links->getNext()) {
         echo "\n📄 Getting next page...\n";
         $nextPageResponse = $messageService->list(2);
-        echo '✅ Next page retrieved with ' . \count($nextPageResponse->getData()) . " messages\n";
+        echo '✅ Next page retrieved with ' . count($nextPageResponse->getData()) . " messages\n";
     }
 } catch (ApiException $e) {
     echo "❌ API error: {$e->getMessage()}\n";

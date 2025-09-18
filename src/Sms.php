@@ -28,7 +28,7 @@ class Sms
         ?string $baseUri = null,
         array $options = []
     ): SmsClient {
-        $guzzleOptions = array_merge([
+        $guzzleOptions = \array_merge([
             'timeout' => 30,
             'connect_timeout' => 10,
         ], $options);

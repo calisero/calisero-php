@@ -48,7 +48,7 @@ class HttpClient
         $this->requestFactory = $requestFactory;
         $this->streamFactory = $streamFactory;
         $this->authProvider = $authProvider;
-        $this->baseUri = rtrim($baseUri, '/');
+        $this->baseUri = \rtrim($baseUri, '/');
         $this->idempotencyKeyProvider = $idempotencyKeyProvider;
     }
 
@@ -82,7 +82,7 @@ class HttpClient
         $request = $this->addHeaders($request, $useIdempotency);
 
         if (!empty($data)) {
-            $jsonData = json_encode($data, JSON_THROW_ON_ERROR);
+            $jsonData = \json_encode($data, JSON_THROW_ON_ERROR);
             $stream = $this->streamFactory->createStream($jsonData);
 
             /** @var RequestInterface $request */
@@ -107,7 +107,7 @@ class HttpClient
         $request = $this->addHeaders($request);
 
         if (!empty($data)) {
-            $jsonData = json_encode($data, JSON_THROW_ON_ERROR);
+            $jsonData = \json_encode($data, JSON_THROW_ON_ERROR);
             $stream = $this->streamFactory->createStream($jsonData);
 
             /** @var RequestInterface $request */
@@ -139,10 +139,10 @@ class HttpClient
      */
     private function buildUri(string $path, array $queryParams = []): string
     {
-        $uri = $this->baseUri . '/' . ltrim($path, '/');
+        $uri = $this->baseUri . '/' . \ltrim($path, '/');
 
         if (!empty($queryParams)) {
-            $uri .= '?' . http_build_query($queryParams);
+            $uri .= '?' . \http_build_query($queryParams);
         }
 
         return $uri;
@@ -205,7 +205,7 @@ class HttpClient
             }
 
             try {
-                $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+                $decoded = \json_decode($body, true, 512, JSON_THROW_ON_ERROR);
                 \assert(\is_array($decoded));
 
                 return $decoded;
@@ -226,7 +226,7 @@ class HttpClient
 
         if (!empty($body)) {
             try {
-                $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+                $decoded = \json_decode($body, true, 512, JSON_THROW_ON_ERROR);
                 if (\is_array($decoded)) {
                     $errorData = $decoded;
                     $errorMessage = \is_string($errorData['message'] ?? null) ? $errorData['message'] : $errorMessage;

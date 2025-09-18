@@ -191,7 +191,7 @@ echo "8️⃣ Demonstrating Comprehensive Error Handler...\n";
 function handleSmsApiError(Throwable $e): void
 {
     echo "🔍 Error Analysis:\n";
-    echo '   📝 Type: ' . \get_class($e) . "\n";
+    echo '   📝 Type: ' . get_class($e) . "\n";
     echo "   💬 Message: {$e->getMessage()}\n";
 
     if ($e instanceof ApiException) {
@@ -199,7 +199,7 @@ function handleSmsApiError(Throwable $e): void
         echo '   🆔 Request ID: ' . ($e->getRequestId() ?? 'N/A') . "\n";
 
         // Specific handling based on error type
-        switch (\get_class($e)) {
+        switch (get_class($e)) {
             case UnauthorizedException::class:
                 echo "   🔧 Action: Check authentication credentials\n";
 

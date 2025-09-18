@@ -18,7 +18,7 @@ class UuidIdempotencyKeyProvider implements IdempotencyKeyProviderInterface
 
     private function generateUuidV4(): string
     {
-        $data = random_bytes(16);
+        $data = \random_bytes(16);
 
         // Set version to 0100
         $data[6] = \chr(\ord($data[6]) & 0x0F | 0x40);
@@ -26,6 +26,6 @@ class UuidIdempotencyKeyProvider implements IdempotencyKeyProviderInterface
         // Set bits 6-7 to 10
         $data[8] = \chr(\ord($data[8]) & 0x3F | 0x80);
 
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+        return \vsprintf('%s%s-%s-%s-%s-%s%s%s', \str_split(\bin2hex($data), 4));
     }
 }

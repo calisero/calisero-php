@@ -28,21 +28,21 @@ try {
     $links = $response->getLinks();
 
     echo "✅ OptOuts listed successfully!\n";
-    echo '📊 OptOuts on this page: ' . \count($optOuts) . "\n";
+    echo '📊 OptOuts on this page: ' . count($optOuts) . "\n";
     echo "📄 Current page: {$meta->getCurrentPage()}\n";
     echo "📄 Per page: {$meta->getPerPage()}\n";
     echo '📄 From record: ' . ($meta->getFrom() ?? 'N/A') . "\n";
     echo '📄 To record: ' . ($meta->getTo() ?? 'N/A') . "\n\n";
 
-    if (\count($optOuts) > 0) {
+    if (count($optOuts) > 0) {
         echo "🚫 Current opt-outs:\n";
-        foreach (\array_slice($optOuts, 0, 10) as $index => $optOut) {
+        foreach (array_slice($optOuts, 0, 10) as $index => $optOut) {
             $reason = $optOut->getReason();
             $reasonDisplay = $reason
-                ? (\strlen($reason) > 40 ? substr($reason, 0, 40) . '...' : $reason)
+                ? (strlen($reason) > 40 ? substr($reason, 0, 40) . '...' : $reason)
                 : 'No reason provided';
 
-            echo \sprintf(
+            echo sprintf(
                 "  %d. 📱 %s [ID: %s]\n     📝 %s\n     ⏰ %s\n\n",
                 $index + 1,
                 $optOut->getPhone(),
@@ -52,8 +52,8 @@ try {
             );
         }
 
-        if (\count($optOuts) > 10) {
-            echo '  ... and ' . (\count($optOuts) - 10) . " more opt-outs\n\n";
+        if (count($optOuts) > 10) {
+            echo '  ... and ' . (count($optOuts) - 10) . " more opt-outs\n\n";
         }
     } else {
         echo "✅ No opt-outs found - all numbers can receive messages\n\n";
@@ -70,13 +70,13 @@ try {
     if ($links->getNext()) {
         echo "\n📄 Getting next page...\n";
         $nextPageResponse = $optOutService->list(2);
-        echo '✅ Next page retrieved with ' . \count($nextPageResponse->getData()) . " opt-outs\n";
+        echo '✅ Next page retrieved with ' . count($nextPageResponse->getData()) . " opt-outs\n";
     }
 
     // Statistics
-    $totalOnPage = \count($optOuts);
+    $totalOnPage = count($optOuts);
     if ($totalOnPage > 0) {
-        $withReasons = \count(array_filter($optOuts, fn ($opt) => $opt->getReason() !== null));
+        $withReasons = count(array_filter($optOuts, fn ($opt) => $opt->getReason() !== null));
         $withoutReasons = $totalOnPage - $withReasons;
 
         echo "\n📊 Statistics for this page:\n";

@@ -11,9 +11,7 @@ return $config
         '@PHP74Migration' => true,
         '@PhpCsFixer' => true,
         'declare_strict_types' => true,
-        'native_function_invocation' => [
-            'include' => ['@compiler_optimized'],
-        ],
+        'native_function_invocation' => false,
         'global_namespace_import' => [
             'import_classes' => false,
             'import_constants' => false,

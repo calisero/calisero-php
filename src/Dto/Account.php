@@ -85,7 +85,7 @@ class Account
         \assert(\is_string($data['state']));
         \assert(\is_string($data['country']));
         \assert(\is_string($data['address']));
-        \assert(is_numeric($data['credit']));
+        \assert(\is_numeric($data['credit']));
         \assert(\is_string($data['status']));
         \assert(\is_bool($data['sandbox']));
         \assert(\is_string($data['created_at']));

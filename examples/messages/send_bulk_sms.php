@@ -40,7 +40,7 @@ try {
     $failureCount = 0;
     $results = [];
 
-    echo '📱 Sending messages to ' . \count($recipients) . " recipients...\n\n";
+    echo '📱 Sending messages to ' . count($recipients) . " recipients...\n\n";
 
     foreach ($recipients as $index => $recipient) {
         try {
@@ -73,7 +73,7 @@ try {
             ++$successCount;
 
             // Add a small delay to avoid rate limiting
-            if ($index < \count($recipients) - 1) {
+            if ($index < count($recipients) - 1) {
                 usleep(200000); // 200ms delay
             }
         } catch (ValidationException $e) {
@@ -107,8 +107,8 @@ try {
     echo "=== Bulk SMS Summary ===\n";
     echo "✅ Successful: {$successCount}\n";
     echo "❌ Failed: {$failureCount}\n";
-    echo '📊 Total: ' . \count($recipients) . "\n";
-    echo '📈 Success Rate: ' . round(($successCount / \count($recipients)) * 100, 2) . "%\n\n";
+    echo '📊 Total: ' . count($recipients) . "\n";
+    echo '📈 Success Rate: ' . round(($successCount / count($recipients)) * 100, 2) . "%\n\n";
 
     // Detailed results
     echo "📝 Detailed Results:\n";

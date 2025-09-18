@@ -35,7 +35,7 @@ class PaginatedMessages
         \assert(\is_array($response['links']));
         \assert(\is_array($response['meta']));
 
-        $messages = array_map(
+        $messages = \array_map(
             static function (mixed $messageData): Message {
                 \assert(\is_array($messageData));
 
