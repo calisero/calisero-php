@@ -65,22 +65,31 @@ From the API Keys section in your dashboard, you can:
 
 ## Quick Start
 
-### Basic Usage
+### Basic SMS Sending
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
 use Calisero\Sms\Sms;
+use Calisero\Sms\Dto\CreateMessageRequest;
 
 // Create a client with your API key
 $client = Sms::client('your-api-key-here');
 
 // Send a simple SMS
-$request = new \Calisero\Sms\Dto\CreateMessageRequest(
+$request = new CreateMessageRequest(
     recipient: '+40742***350',
-    sender: 'CALISEOR',
+    sender: 'CALISERO',
     body: 'Hello from Calisero!'
 );
 
 $response = $client->messages()->create($request);
+$message = $response->getData();
+
+echo "Message sent! ID: " . $message->getId() . "\n";
+echo "Status: " . $message->getStatus() . "\n";
 ```
 
 ### Environment Configuration
@@ -93,6 +102,12 @@ CALISERO_API_KEY=your-api-key-here
 ```
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+
 // In your application
 $client = Sms::client($_ENV['CALISERO_API_KEY']);
 ```
@@ -101,6 +116,15 @@ $client = Sms::client($_ENV['CALISERO_API_KEY']);
 
 ### OTP/2FA Authentication
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+use Calisero\Sms\Dto\CreateMessageRequest;
+
+$client = Sms::client('your-api-key-here');
+
 $request = new CreateMessageRequest(
     recipient: $userPhoneNumber,
     body: "Your verification code is: AC3-4F6. Valid for 5 minutes.",
@@ -108,25 +132,49 @@ $request = new CreateMessageRequest(
     validity: 1, // 1 hour validity
     sender: 'YourApp'
 );
+
 $response = $client->messages()->create($request);
+echo "OTP sent! Message ID: " . $response->getData()->getId() . "\n";
 ```
 
 ### Order Notifications
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+use Calisero\Sms\Dto\CreateMessageRequest;
+
+$client = Sms::client('your-api-key-here');
+
 $request = new CreateMessageRequest(
     recipient: $customerPhone,
     body: "Order #{$orderNumber} confirmed! Estimated delivery: {$deliveryDate}",
     callbackUrl: "https://yourstore.com/webhooks/sms/dlr",
     sender: 'YourStore'
 );
+
+$response = $client->messages()->create($request);
+echo "Order notification sent!\n";
 ```
 
 ### Marketing Campaigns with Opt-out Compliance
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+use Calisero\Sms\Dto\CreateMessageRequest;
+use Calisero\Sms\Exceptions\NotFoundException;
+
+$client = Sms::client('your-api-key-here');
+
 // Check if user is opted out first
 try {
     $client->optOuts()->get($phoneNumber);
-    echo "User is opted out, skipping message";
+    echo "User is opted out, skipping message\n";
 } catch (NotFoundException $e) {
     // User is not opted out, safe to send
     $request = new CreateMessageRequest(
@@ -134,14 +182,23 @@ try {
         body: "Special offer! Get 20% off with code SAVE20. Reply STOP to opt out.",
         sender: 'YourBrand'
     );
-    $client->messages()->create($request);
+    
+    $response = $client->messages()->create($request);
+    echo "Marketing message sent!\n";
 }
 ```
 
 ### Advanced Message Creation
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
 use Calisero\Sms\Dto\CreateMessageRequest;
+
+$client = Sms::client('your-api-key-here');
 
 $request = new CreateMessageRequest(
     recipient: '+40742***350',
@@ -154,6 +211,7 @@ $request = new CreateMessageRequest(
 );
 
 $response = $client->messages()->create($request);
+echo "Advanced message created with ID: " . $response->getData()->getId() . "\n";
 ```
 
 ## Authentication
@@ -161,6 +219,10 @@ $response = $client->messages()->create($request);
 ### Using API Key (Bearer Token)
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
 use Calisero\Sms\Sms;
 
 $client = Sms::client('your-api-key-here');
@@ -169,6 +231,10 @@ $client = Sms::client('your-api-key-here');
 ### Custom Authentication Provider
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
 use Calisero\Sms\Contracts\AuthProviderInterface;
 use Calisero\Sms\SmsClient;
 
@@ -245,7 +311,14 @@ This library includes comprehensive examples for all operations. Check the [`exa
 #### Send a Message
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
 use Calisero\Sms\Dto\CreateMessageRequest;
+
+$client = Sms::client('your-api-key-here');
 
 $request = new CreateMessageRequest(
     recipient: '+40742***350',
@@ -263,6 +336,14 @@ echo $message->getParts();     // Number of SMS parts
 #### Get Message Details
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+
+$client = Sms::client('your-api-key-here');
+
 $response = $client->messages()->get('message-uuid-here');
 $message = $response->getData();
 
@@ -276,6 +357,14 @@ echo $message->getDeliveredAt();
 #### List Messages
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+
+$client = Sms::client('your-api-key-here');
+
 // Get first page
 $response = $client->messages()->list();
 
@@ -296,10 +385,19 @@ if ($response->getLinks()->getNext()) {
 #### Delete a Message
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+use Calisero\Sms\Exceptions\ForbiddenException;
+
+$client = Sms::client('your-api-key-here');
+
 try {
     $client->messages()->delete('message-uuid-here');
     echo "Message deleted successfully";
-} catch (\Calisero\Sms\Exceptions\ForbiddenException $e) {
+} catch (ForbiddenException $e) {
     echo "Cannot delete: message already sent";
 }
 ```
@@ -309,7 +407,14 @@ try {
 #### Create an Opt-out
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
 use Calisero\Sms\Dto\CreateOptOutRequest;
+
+$client = Sms::client('your-api-key-here');
 
 $request = new CreateOptOutRequest(
     phone: '+40742***350',
@@ -317,11 +422,20 @@ $request = new CreateOptOutRequest(
 );
 
 $response = $client->optOuts()->create($request);
+echo "Opt-out created with ID: " . $response->getData()->getId() . "\n";
 ```
 
 #### List Opt-outs
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+
+$client = Sms::client('your-api-key-here');
+
 $response = $client->optOuts()->list();
 
 foreach ($response->getData() as $optOut) {
@@ -332,7 +446,14 @@ foreach ($response->getData() as $optOut) {
 #### Update an Opt-out
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
 use Calisero\Sms\Dto\UpdateOptOutRequest;
+
+$client = Sms::client('your-api-key-here');
 
 $request = new UpdateOptOutRequest(
     phone: '+40742***350',
@@ -340,12 +461,22 @@ $request = new UpdateOptOutRequest(
 );
 
 $response = $client->optOuts()->update('optout-uuid-here', $request);
+echo "Opt-out updated successfully\n";
 ```
 
 #### Delete an Opt-out
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+
+$client = Sms::client('your-api-key-here');
+
 $client->optOuts()->delete('optout-uuid-here');
+echo "Opt-out deleted successfully\n";
 ```
 
 ### Accounts
@@ -353,13 +484,21 @@ $client->optOuts()->delete('optout-uuid-here');
 #### Get Account Information
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+
+$client = Sms::client('your-api-key-here');
+
 $response = $client->accounts()->get('account-uuid-here');
 $account = $response->getData();
 
-echo 'Account: ' . $account->getName();
-echo 'Credit: ' . $account->getCredit();
-echo 'Status: ' . $account->getStatus();
-echo 'Sandbox: ' . ($account->isSandbox() ? 'Yes' : 'No');
+echo 'Account: ' . $account->getName() . "\n";
+echo 'Credit: ' . $account->getCredit() . "\n";
+echo 'Status: ' . $account->getStatus() . "\n";
+echo 'Sandbox: ' . ($account->isSandbox() ? 'Yes' : 'No') . "\n";
 ```
 
 ## Error Handling
@@ -367,6 +506,12 @@ echo 'Sandbox: ' . ($account->isSandbox() ? 'Yes' : 'No');
 The library provides specific exception types for different error scenarios:
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Exceptions\{
     ApiException,
     UnauthorizedException,
@@ -378,31 +523,39 @@ use Calisero\Sms\Exceptions\{
     TransportException
 };
 
+$client = Sms::client('your-api-key-here');
+
+$request = new CreateMessageRequest(
+    recipient: '+40742***350',
+    body: 'Test message'
+);
+
 try {
     $response = $client->messages()->create($request);
+    echo "Message sent successfully!\n";
 } catch (UnauthorizedException $e) {
     // Handle authentication errors (401)
-    echo "Invalid or expired token";
+    echo "Invalid or expired token\n";
 } catch (ValidationException $e) {
     // Handle validation errors (422)
-    echo "Validation error: " . $e->getMessage();
+    echo "Validation error: " . $e->getMessage() . "\n";
     foreach ($e->getValidationErrors() as $field => $errors) {
-        echo "$field: " . implode(', ', $errors);
+        echo "$field: " . implode(', ', $errors) . "\n";
     }
 } catch (RateLimitedException $e) {
     // Handle rate limiting (429)
-    echo "Rate limited. Retry after: " . $e->getRetryAfter() . " seconds";
+    echo "Rate limited. Retry after: " . $e->getRetryAfter() . " seconds\n";
 } catch (ServerException $e) {
     // Handle server errors (5xx)
-    echo "Server error: " . $e->getMessage();
+    echo "Server error: " . $e->getMessage() . "\n";
 } catch (TransportException $e) {
     // Handle network/transport errors
-    echo "Network error: " . $e->getMessage();
+    echo "Network error: " . $e->getMessage() . "\n";
 } catch (ApiException $e) {
     // Handle any other API errors
-    echo "API error: " . $e->getMessage();
-    echo "Status code: " . $e->getStatusCode();
-    echo "Request ID: " . $e->getRequestId();
+    echo "API error: " . $e->getMessage() . "\n";
+    echo "Status code: " . $e->getStatusCode() . "\n";
+    echo "Request ID: " . $e->getRequestId() . "\n";
 }
 ```
 
@@ -411,6 +564,10 @@ try {
 ### Custom HTTP Client
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
 use Calisero\Sms\Sms;
 use Calisero\Sms\Contracts\HttpClientInterface;
 use GuzzleHttp\Client as GuzzleClient;
@@ -437,6 +594,12 @@ $client = Sms::clientWith(
 ### Custom Options
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Sms;
+
 // Create client with custom Guzzle options
 $client = Sms::client(
     bearerToken: 'your-token', 
@@ -451,6 +614,10 @@ $client = Sms::client(
 ### Custom Idempotency Key Provider
 
 ```php
+<?php
+
+require_once 'vendor/autoload.php';
+
 use Calisero\Sms\Contracts\IdempotencyKeyProviderInterface;
 use Calisero\Sms\SmsClient;
 
@@ -497,9 +664,14 @@ composer qa
 ### Testing Your Implementation
 
 ```php
+<?php
+
 // In your tests, you can mock the HTTP client
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use Calisero\Sms\Sms;
+use Calisero\Sms\Dto\CreateMessageRequest;
+use Calisero\Sms\Contracts\HttpClientInterface;
 
 class YourSmsTest extends TestCase
 {

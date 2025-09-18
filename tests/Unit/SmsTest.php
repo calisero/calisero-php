@@ -49,7 +49,7 @@ class SmsTest extends TestCase
     public function testClientWithAllParameters(): void
     {
         $bearerToken = 'full-test-token';
-        $baseUri = 'https://staging.api.calisero.ro/v1';
+        $baseUri = 'https://rest.calisero.ro/v1';
         $options = [
             'timeout' => 45,
             'connect_timeout' => 5,

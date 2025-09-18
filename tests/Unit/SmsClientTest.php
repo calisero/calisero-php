@@ -192,7 +192,7 @@ class SmsClientTest extends TestCase
     public function testCreateWithAllParameters(): void
     {
         $bearerToken = 'full-test-token-456';
-        $baseUri = 'https://staging.api.calisero.ro/v1';
+        $baseUri = 'https://rest.calisero.ro/v1';
 
         $smsClient = SmsClient::create(
             $bearerToken,

@@ -5,6 +5,31 @@ All notable changes to `calisero-php` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-09-18
+
+### Added
+- Complete API key management guide with step-by-step instructions for obtaining keys from Calisero dashboard
+- Copy-paste ready code examples with complete use statements and `require_once` declarations
+- Standalone PHP examples that can be run immediately without modification
+- Enhanced Quick Start section with environment configuration best practices
+- Comprehensive Common Use Cases section covering OTP/2FA, order notifications, and marketing campaigns with GDPR compliance
+- Detailed API Reference with complete, runnable examples for all endpoints
+- Advanced Configuration examples including custom HTTP clients and idempotency providers
+- Testing section with mock client examples for unit testing user implementations
+- Enhanced error handling documentation with all exception types and practical usage patterns
+
+### Improved
+- All README code examples are now immediately copy-paste runnable
+- Added complete PHP opening tags (`<?php`) and autoloader includes to all examples
+- Enhanced developer onboarding experience with clear, standalone examples
+- Better documentation structure with comprehensive use statements throughout
+- Improved code readability and accessibility for new developers
+
+### Changed
+- README examples now include full context and imports for better developer experience
+- Updated all code snippets to be standalone and immediately executable
+- Enhanced documentation formatting and organization for better readability
+
 ## [1.0.2] - 2025-09-18
 
 ### Added
