@@ -61,31 +61,31 @@ class AccountServiceTest extends TestCase
         $this->assertInstanceOf(GetAccountResponse::class, $response);
         $account = $response->getData();
         $this->assertInstanceOf(Account::class, $account);
-        
+
         // Test basic information
         $this->assertSame('acc_123456789', $account->getId());
         $this->assertSame('ACME001', $account->getCode());
         $this->assertSame('ACME Corporation', $account->getName());
         $this->assertSame('Leading technology company', $account->getDescription());
-        
+
         // Test financial information
         $this->assertSame('RO12345678', $account->getFiscalCode());
         $this->assertSame('J40/1234/2020', $account->getRegistryNumber());
         $this->assertSame('RO49AAAA1B31007593840000', $account->getIban());
         $this->assertSame(150.75, $account->getCredit());
-        
+
         // Test location information
         $this->assertSame('Bucharest', $account->getCity());
         $this->assertSame('Bucharest', $account->getState());
         $this->assertSame('Romania', $account->getCountry());
         $this->assertSame('123 Main Street', $account->getAddress());
         $this->assertSame(10001, $account->getPostalCode());
-        
+
         // Test contact information
         $this->assertSame('contact@acme.com', $account->getEmail());
         $this->assertSame('+40212345678', $account->getPhone());
         $this->assertSame('John Doe', $account->getContactPerson());
-        
+
         // Test status and environment
         $this->assertSame('active', $account->getStatus());
         $this->assertFalse($account->isSandbox());
@@ -129,7 +129,7 @@ class AccountServiceTest extends TestCase
         $response = $this->accountService->get($accountId);
 
         $account = $response->getData();
-        
+
         // Test required fields
         $this->assertSame('acc_minimal', $account->getId());
         $this->assertSame('MIN001', $account->getCode());
@@ -138,7 +138,7 @@ class AccountServiceTest extends TestCase
         $this->assertSame('Unknown State', $account->getState());
         $this->assertSame('Unknown Country', $account->getCountry());
         $this->assertSame('Unknown Address', $account->getAddress());
-        
+
         // Test nullable fields
         $this->assertNull($account->getDescription());
         $this->assertNull($account->getFiscalCode());
@@ -148,7 +148,7 @@ class AccountServiceTest extends TestCase
         $this->assertNull($account->getEmail());
         $this->assertNull($account->getPhone());
         $this->assertNull($account->getContactPerson());
-        
+
         // Test defaults
         $this->assertSame(0.0, $account->getCredit());
         $this->assertSame('pending', $account->getStatus());
@@ -283,7 +283,7 @@ class AccountServiceTest extends TestCase
         $response = $this->accountService->get($accountId);
 
         $account = $response->getData();
-        
+
         // Verify all fields are properly set
         $this->assertSame('acc_complete', $account->getId());
         $this->assertSame('COMPLETE001', $account->getCode());

@@ -19,8 +19,8 @@ use Psr\Http\Message\StreamFactoryInterface;
 class SmsClientTest extends TestCase
 {
     private HttpClientInterface&MockObject $httpClient;
-    private RequestFactoryInterface&MockObject $requestFactory;
-    private StreamFactoryInterface&MockObject $streamFactory;
+    private MockObject&RequestFactoryInterface $requestFactory;
+    private MockObject&StreamFactoryInterface $streamFactory;
     private AuthProviderInterface&MockObject $authProvider;
     private IdempotencyKeyProviderInterface&MockObject $idempotencyKeyProvider;
 
@@ -195,7 +195,7 @@ class SmsClientTest extends TestCase
         );
 
         $this->assertInstanceOf(SmsClient::class, $smsClient);
-        
+
         // Verify all services are available
         $this->assertInstanceOf(MessageService::class, $smsClient->messages());
         $this->assertInstanceOf(OptOutService::class, $smsClient->optOuts());

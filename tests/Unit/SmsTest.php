@@ -84,6 +84,7 @@ class SmsTest extends TestCase
     public function testClientWithCustomHttpClient(): void
     {
         $bearerToken = 'custom-http-client-test';
+
         /** @var HttpClientInterface&MockObject $httpClient */
         $httpClient = $this->createMock(HttpClientInterface::class);
 
@@ -95,6 +96,7 @@ class SmsTest extends TestCase
     public function testClientWithCustomHttpClientAndBaseUri(): void
     {
         $bearerToken = 'custom-client-uri-test';
+
         /** @var HttpClientInterface&MockObject $httpClient */
         $httpClient = $this->createMock(HttpClientInterface::class);
         $baseUri = 'https://custom.endpoint.com/v3';
@@ -107,6 +109,7 @@ class SmsTest extends TestCase
     public function testClientWithCustomHttpClientUsesDefaultBaseUri(): void
     {
         $bearerToken = 'custom-client-default-uri';
+
         /** @var HttpClientInterface&MockObject $httpClient */
         $httpClient = $this->createMock(HttpClientInterface::class);
 

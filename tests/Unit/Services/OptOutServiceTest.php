@@ -177,11 +177,11 @@ class OptOutServiceTest extends TestCase
         $this->assertInstanceOf(PaginatedOptOuts::class, $response);
         $optOuts = $response->getData();
         $this->assertCount(2, $optOuts);
-        
+
         $this->assertSame('opt_1', $optOuts[0]->getId());
         $this->assertSame('+40742123456', $optOuts[0]->getPhone());
         $this->assertSame('Marketing opt-out', $optOuts[0]->getReason());
-        
+
         $this->assertSame('opt_2', $optOuts[1]->getId());
         $this->assertSame('+40742123457', $optOuts[1]->getPhone());
         $this->assertNull($optOuts[1]->getReason());
@@ -333,7 +333,7 @@ class OptOutServiceTest extends TestCase
     public function testCreateOptOutWithLongReason(): void
     {
         $longReason = 'This is a very long reason for the opt-out request that exceeds normal length to test how the system handles longer explanations from customers who want to provide detailed feedback about their decision to opt out from receiving SMS messages from our service.';
-        
+
         $request = new CreateOptOutRequest('+40742123456', $longReason);
 
         $expectedRequestData = [
