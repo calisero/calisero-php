@@ -8,6 +8,7 @@ use Calisero\Sms\Contracts\AuthProviderInterface;
 use Calisero\Sms\Contracts\HttpClientInterface;
 use Calisero\Sms\Contracts\IdempotencyKeyProviderInterface;
 use Calisero\Sms\Contracts\RequestFactoryInterface;
+use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\NotFoundException;
 use Calisero\Sms\Exceptions\UnauthorizedException;
 use Calisero\Sms\Exceptions\ValidationException;
@@ -158,12 +159,42 @@ class HttpClientTest extends TestCase
         $this->authProvider->method('getToken')->willReturn('test-token');
         $this->httpClient->method('sendRequest')->willReturn($response);
 
-        $response->method('getStatusCode')->willReturn(400);
-        $response->method('getBody')->willReturn('{"error":{"message":"Validation failed"}}');
+        $response->method('getStatusCode')->willReturn(422);
+        $response->method('getBody')->willReturn('{"error":{"message":"Validation failed"},"errors":{"email":["Email is required"],"phone":["Phone format is invalid"]}}');
         $response->method('getHeaderLine')->willReturn('');
 
-        $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('Validation failed');
+        try {
+            $this->client->get('/test');
+            $this->fail('Expected ValidationException was not thrown');
+        } catch (ValidationException $e) {
+            $this->assertSame('Validation failed', $e->getMessage());
+            $this->assertSame(422, $e->getStatusCode());
+
+            $validationErrors = $e->getValidationErrors();
+            $this->assertIsArray($validationErrors);
+            $this->assertArrayHasKey('email', $validationErrors);
+            $this->assertArrayHasKey('phone', $validationErrors);
+            $this->assertSame(['Email is required'], $validationErrors['email']);
+            $this->assertSame(['Phone format is invalid'], $validationErrors['phone']);
+        }
+    }
+
+    public function testBadRequestException(): void
+    {
+        $request = $this->createMock(RequestInterface::class);
+        $response = $this->createMock(ResponseInterface::class);
+
+        $this->requestFactory->method('createRequest')->willReturn($request);
+        $request->method('withHeader')->willReturnSelf();
+        $this->authProvider->method('getToken')->willReturn('test-token');
+        $this->httpClient->method('sendRequest')->willReturn($response);
+
+        $response->method('getStatusCode')->willReturn(400);
+        $response->method('getBody')->willReturn('{"error":{"message":"Bad request"}}');
+        $response->method('getHeaderLine')->willReturn('');
+
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage('Bad request');
 
         $this->client->get('/test');
     }

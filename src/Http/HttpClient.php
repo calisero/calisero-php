@@ -225,7 +225,7 @@ class HttpClient
         // Throw appropriate exception based on status code
         switch ($statusCode) {
             case 400:
-                throw new ValidationException($errorMessage, 0, null, $statusCode, $requestId, \is_array($errorData) ? $errorData : []);
+                throw new ApiException($errorMessage, 0, null, $statusCode, $requestId, \is_array($errorData) ? $errorData : []);
 
             case 401:
                 throw new UnauthorizedException($errorMessage, 0, null, $statusCode, $requestId);
@@ -235,6 +235,25 @@ class HttpClient
 
             case 404:
                 throw new NotFoundException($errorMessage, 0, null, $statusCode, $requestId);
+
+            case 422:
+                $validationErrors = [];
+                $generalErrorDetails = [];
+
+                if (\is_array($errorData)) {
+                    $generalErrorDetails = $errorData;
+                    // Extract validation errors if they exist in a specific structure
+                    if (isset($errorData['errors']) && \is_array($errorData['errors'])) {
+                        $validationErrors = $errorData['errors'];
+                    } elseif (isset($errorData['validation_errors']) && \is_array($errorData['validation_errors'])) {
+                        $validationErrors = $errorData['validation_errors'];
+                    } else {
+                        // If no specific validation structure, use the entire error data as validation errors
+                        $validationErrors = $errorData;
+                    }
+                }
+
+                throw new ValidationException($errorMessage, 0, null, $statusCode, $requestId, $generalErrorDetails, $validationErrors);
 
             case 429:
                 $retryAfter = $response->getHeaderLine('Retry-After');
