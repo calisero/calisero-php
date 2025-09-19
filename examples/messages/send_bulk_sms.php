@@ -11,16 +11,12 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\ValidationException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $messageService = $client->messages();
-
     echo "=== Send Bulk SMS Messages ===\n\n";
 
     // Define recipients and message content
@@ -35,6 +31,9 @@ try {
     $messageBody = 'Important announcement: Our office will be closed tomorrow for maintenance. Thank you for your understanding.';
     $sender = 'Calisero';
     $callbackUrl = 'https://yourapp.com/webhooks/bulk-sms';
+
+    // Create client once for bulk operations
+    $client = SmsClient::create($bearerToken);
 
     $successCount = 0;
     $failureCount = 0;
@@ -56,7 +55,11 @@ try {
                 $sender
             );
 
-            $response = $messageService->create($request);
+            // Send using fluent chaining
+            $response = $client
+                ->messages()
+                ->create($request);
+
             $message = $response->getData();
 
             echo "✅ Success\n";

@@ -9,20 +9,16 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Calisero\Sms\Exceptions\ApiException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $messageService = $client->messages();
-
     echo "=== List SMS Messages ===\n\n";
 
     // List messages (first page)
-    $response = $messageService->list();
+    $response = SmsClient::create($bearerToken)->messages()->list();
     $messages = $response->getData();
     $meta = $response->getMeta();
     $links = $response->getLinks();
@@ -64,7 +60,7 @@ try {
     // Example: Get next page if available
     if ($links->getNext()) {
         echo "\n📄 Getting next page...\n";
-        $nextPageResponse = $messageService->list(2);
+        $nextPageResponse = SmsClient::create($bearerToken)->messages()->list(2);
         echo '✅ Next page retrieved with ' . count($nextPageResponse->getData()) . " messages\n";
     }
 } catch (ApiException $e) {

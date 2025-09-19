@@ -11,16 +11,12 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\ValidationException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $messageService = $client->messages();
-
     echo "=== Send Advanced SMS ===\n\n";
 
     // Create an advanced SMS with all options
@@ -34,7 +30,11 @@ try {
         'Calisero'                                               // sender
     );
 
-    $response = $messageService->create($request);
+    // Send advanced SMS using fluent chaining
+    $response = SmsClient::create($bearerToken)
+        ->messages()
+        ->create($request);
+
     $message = $response->getData();
 
     echo "✅ Advanced message sent successfully!\n";

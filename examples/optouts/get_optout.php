@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\NotFoundException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
@@ -19,14 +19,12 @@ $bearerToken = 'your-api-key-here';
 $phoneNumber = '+40742***350';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $optOutService = $client->optOuts();
+    echo "=== Get OptOut ===
 
-    echo "=== Get OptOut Details ===\n\n";
+";
 
-    // Get opt-out details
-    $response = $optOutService->get($phoneNumber);
+    // Fetch the opt-out by ID
+    $response = SmsClient::create($bearerToken)->optOuts()->get($optOutId);
     $optOut = $response->getData();
 
     echo "✅ Opt-out found!\n";

@@ -12,7 +12,7 @@ use Calisero\Sms\Dto\UpdateOptOutRequest;
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\NotFoundException;
 use Calisero\Sms\Exceptions\ValidationException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
@@ -21,17 +21,13 @@ $bearerToken = 'your-api-key-here';
 $phoneNumber = '+40742***350';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $optOutService = $client->optOuts();
-
     echo "=== Update OptOut ===\n\n";
 
     // First, let's check the current opt-out
     echo "1️⃣ Checking current opt-out status...\n";
 
     try {
-        $currentResponse = $optOutService->get($phoneNumber);
+        $currentResponse = SmsClient::create($bearerToken)->optOuts()->get($phoneNumber);
         $currentOptOut = $currentResponse->getData();
 
         echo "✅ Current opt-out found:\n";
@@ -52,7 +48,7 @@ try {
         'Updated: Customer called support and confirmed they want to remain opted out due to privacy concerns'
     );
 
-    $updateResponse = $optOutService->update($phoneNumber, $updateRequest);
+    $updateResponse = SmsClient::create($bearerToken)->optOuts()->update($phoneNumber, $updateRequest);
     $updatedOptOut = $updateResponse->getData();
 
     echo "✅ Opt-out updated successfully!\n";

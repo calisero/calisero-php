@@ -7,6 +7,7 @@ namespace Calisero\Sms\Http;
 use Calisero\Sms\Contracts\AuthProviderInterface;
 use Calisero\Sms\Contracts\HttpClientInterface;
 use Calisero\Sms\Contracts\IdempotencyKeyProviderInterface;
+use Calisero\Sms\Contracts\RequestFactoryInterface;
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\ForbiddenException;
 use Calisero\Sms\Exceptions\NotFoundException;
@@ -15,23 +16,14 @@ use Calisero\Sms\Exceptions\ServerException;
 use Calisero\Sms\Exceptions\TransportException;
 use Calisero\Sms\Exceptions\UnauthorizedException;
 use Calisero\Sms\Exceptions\ValidationException;
-use Psr\Http\Client\ClientExceptionInterface;
-use Psr\Http\Message\RequestFactoryInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamFactoryInterface;
 
 /**
- * HTTP client wrapper with authentication and error handling.
+ * HTTP client wrapper that combines cURL client with authentication and error handling.
  */
 class HttpClient
 {
-    private const API_VERSION = '1.0.0';
-    private const USER_AGENT = 'Calisero-PHP/' . self::API_VERSION;
-
     private HttpClientInterface $httpClient;
     private RequestFactoryInterface $requestFactory;
-    private StreamFactoryInterface $streamFactory;
     private AuthProviderInterface $authProvider;
     private ?IdempotencyKeyProviderInterface $idempotencyKeyProvider;
     private string $baseUri;
@@ -39,25 +31,24 @@ class HttpClient
     public function __construct(
         HttpClientInterface $httpClient,
         RequestFactoryInterface $requestFactory,
-        StreamFactoryInterface $streamFactory,
         AuthProviderInterface $authProvider,
         string $baseUri = 'https://rest.calisero.ro/api/v1',
         ?IdempotencyKeyProviderInterface $idempotencyKeyProvider = null
     ) {
         $this->httpClient = $httpClient;
         $this->requestFactory = $requestFactory;
-        $this->streamFactory = $streamFactory;
         $this->authProvider = $authProvider;
         $this->baseUri = \rtrim($baseUri, '/');
         $this->idempotencyKeyProvider = $idempotencyKeyProvider;
     }
-
+    
     /**
      * Send a GET request.
      *
      * @param array<string, mixed> $queryParams
      *
      * @return array<string, mixed>
+     * @throws TransportException
      */
     public function get(string $path, array $queryParams = []): array
     {
@@ -83,11 +74,7 @@ class HttpClient
 
         if (!empty($data)) {
             $jsonData = \json_encode($data, JSON_THROW_ON_ERROR);
-            $stream = $this->streamFactory->createStream($jsonData);
-
-            /** @var RequestInterface $request */
-            $request = $request->withBody($stream)
-                ->withHeader('Content-Type', 'application/json');
+            $request = $request->withBody($jsonData);
         }
 
         return $this->sendRequest($request);
@@ -108,11 +95,7 @@ class HttpClient
 
         if (!empty($data)) {
             $jsonData = \json_encode($data, JSON_THROW_ON_ERROR);
-            $stream = $this->streamFactory->createStream($jsonData);
-
-            /** @var RequestInterface $request */
-            $request = $request->withBody($stream)
-                ->withHeader('Content-Type', 'application/json');
+            $request = $request->withBody($jsonData);
         }
 
         return $this->sendRequest($request);
@@ -133,7 +116,7 @@ class HttpClient
     }
 
     /**
-     * Build URI with query parameters.
+     * Build the full URI for a request.
      *
      * @param array<string, mixed> $queryParams
      */
@@ -142,33 +125,36 @@ class HttpClient
         $uri = $this->baseUri . '/' . \ltrim($path, '/');
 
         if (!empty($queryParams)) {
-            $uri .= '?' . \http_build_query($queryParams);
+            $query = \http_build_query($queryParams);
+            $uri .= '?' . $query;
         }
 
         return $uri;
     }
 
+    /**
+     * Add authentication and standard headers to a request.
+     */
     private function addHeaders(RequestInterface $request, bool $useIdempotency = false): RequestInterface
     {
-        /** @var RequestInterface $request */
+        $request = $request->withHeader('Accept', 'application/json');
+        $request = $request->withHeader('Content-Type', 'application/json');
+        $request = $request->withHeader('User-Agent', 'Calisero-SMS-PHP/1.0');
+
+        // Add authentication
         $request = $request->withHeader('Authorization', 'Bearer ' . $this->authProvider->getToken());
 
-        /** @var RequestInterface $request */
-        $request = $request->withHeader('User-Agent', self::USER_AGENT);
-
-        /** @var RequestInterface $request */
-        $request = $request->withHeader('Accept', 'application/json');
-
+        // Add idempotency key if requested and provider is available
         if ($useIdempotency && $this->idempotencyKeyProvider !== null) {
-            /** @var RequestInterface $request */
-            $request = $request->withHeader('Idempotency-Key', $this->idempotencyKeyProvider->generate());
+            $idempotencyKey = $this->idempotencyKeyProvider->generate();
+            $request = $request->withHeader('Idempotency-Key', $idempotencyKey);
         }
 
         return $request;
     }
 
     /**
-     * Send a PSR-7 request.
+     * Send a request and handle the response.
      *
      * @return array<string, mixed>
      */
@@ -195,7 +181,7 @@ class HttpClient
     private function handleResponse(ResponseInterface $response, RequestInterface $request): array
     {
         $statusCode = $response->getStatusCode();
-        $body = (string) $response->getBody();
+        $body = $response->getBody();
         $requestId = $response->getHeaderLine('X-Request-ID') ?: null;
 
         // Handle successful responses
@@ -226,42 +212,31 @@ class HttpClient
 
         if (!empty($body)) {
             try {
-                $decoded = \json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-                if (\is_array($decoded)) {
-                    $errorData = $decoded;
-                    $errorMessage = \is_string($errorData['message'] ?? null) ? $errorData['message'] : $errorMessage;
+                $errorData = \json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+                if (\is_array($errorData) && isset($errorData['error']['message'])) {
+                    $errorMessage = $errorData['error']['message'];
                 }
             } catch (\JsonException $e) {
                 // Ignore JSON decode errors for error responses
             }
         }
 
+        // Throw appropriate exception based on status code
         switch ($statusCode) {
+            case 400:
+                throw new ValidationException($errorMessage, 0, null, $statusCode, $requestId, \is_array($errorData) ? $errorData : []);
+
             case 401:
-                throw new UnauthorizedException($errorMessage, 0, null, $statusCode, $requestId, $errorData ?? []);
+                throw new UnauthorizedException($errorMessage, 0, null, $statusCode, $requestId);
 
             case 403:
-                throw new ForbiddenException($errorMessage, 0, null, $statusCode, $requestId, $errorData ?? []);
+                throw new ForbiddenException($errorMessage, 0, null, $statusCode, $requestId);
 
             case 404:
-                throw new NotFoundException($errorMessage, 0, null, $statusCode, $requestId, $errorData ?? []);
-
-            case 422:
-                $validationErrors = \is_array($errorData['errors'] ?? null) ? $errorData['errors'] : [];
-
-                throw new ValidationException(
-                    $errorMessage,
-                    0,
-                    null,
-                    $statusCode,
-                    $requestId,
-                    $errorData ?? [],
-                    $validationErrors
-                );
+                throw new NotFoundException($errorMessage, 0, null, $statusCode, $requestId);
 
             case 429:
                 $retryAfter = $response->getHeaderLine('Retry-After');
-                $retryAfterInt = $retryAfter ? (int) $retryAfter : null;
 
                 throw new RateLimitedException(
                     $errorMessage,
@@ -269,18 +244,18 @@ class HttpClient
                     null,
                     $statusCode,
                     $requestId,
-                    $errorData ?? [],
-                    $retryAfterInt
+                    \is_array($errorData) ? $errorData : [],
+                    $retryAfter ? (int) $retryAfter : null
                 );
 
             case 500:
             case 502:
             case 503:
             case 504:
-                throw new ServerException($errorMessage, 0, null, $statusCode, $requestId, $errorData ?? []);
+                throw new ServerException($errorMessage, 0, null, $statusCode, $requestId);
 
             default:
-                throw new ApiException($errorMessage, 0, null, $statusCode, $requestId, $errorData ?? []);
+                throw new ApiException($errorMessage, 0, null, $statusCode, $requestId);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Calisero\Sms\Auth;
 use Calisero\Sms\Contracts\AuthProviderInterface;
 
 /**
- * Simple bearer token authentication provider.
+ * Bearer token authentication provider.
  */
 class BearerTokenAuthProvider implements AuthProviderInterface
 {

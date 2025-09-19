@@ -11,16 +11,12 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use Calisero\Sms\Dto\CreateOptOutRequest;
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\ValidationException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $optOutService = $client->optOuts();
-
     echo "=== Create OptOut ===\n\n";
 
     // Create an opt-out for a phone number
@@ -29,7 +25,7 @@ try {
         'Customer requested to stop receiving marketing messages'
     );
 
-    $response = $optOutService->create($request);
+    $response = SmsClient::create($bearerToken)->optOuts()->create($request);
     $optOut = $response->getData();
 
     echo "✅ Opt-out created successfully!\n";

@@ -5,16 +5,13 @@ declare(strict_types=1);
 namespace Calisero\Sms;
 
 use Calisero\Sms\Auth\BearerTokenAuthProvider;
-use Calisero\Sms\Contracts\AuthProviderInterface;
-use Calisero\Sms\Contracts\HttpClientInterface;
-use Calisero\Sms\Contracts\IdempotencyKeyProviderInterface;
+use Calisero\Sms\Http\BaseHttpClient;
+use Calisero\Sms\Http\Factory\HttpFactory;
 use Calisero\Sms\Http\HttpClient;
 use Calisero\Sms\IdempotencyKey\UuidIdempotencyKeyProvider;
 use Calisero\Sms\Services\AccountService;
 use Calisero\Sms\Services\MessageService;
 use Calisero\Sms\Services\OptOutService;
-use Psr\Http\Message\RequestFactoryInterface;
-use Psr\Http\Message\StreamFactoryInterface;
 
 /**
  * Main SMS API client.
@@ -26,27 +23,9 @@ class SmsClient
     private OptOutService $optOutService;
     private AccountService $accountService;
 
-    public function __construct(
-        HttpClientInterface $httpClient,
-        RequestFactoryInterface $requestFactory,
-        StreamFactoryInterface $streamFactory,
-        AuthProviderInterface $authProvider,
-        string $baseUri = 'https://rest.calisero.ro/api/v1',
-        ?IdempotencyKeyProviderInterface $idempotencyKeyProvider = null
-    ) {
-        if ($idempotencyKeyProvider === null) {
-            $idempotencyKeyProvider = new UuidIdempotencyKeyProvider();
-        }
-
-        $this->httpClient = new HttpClient(
-            $httpClient,
-            $requestFactory,
-            $streamFactory,
-            $authProvider,
-            $baseUri,
-            $idempotencyKeyProvider
-        );
-
+    private function __construct(HttpClient $httpClient)
+    {
+        $this->httpClient = $httpClient;
         $this->messageService = new MessageService($this->httpClient);
         $this->optOutService = new OptOutService($this->httpClient);
         $this->accountService = new AccountService($this->httpClient);
@@ -54,25 +33,25 @@ class SmsClient
 
     /**
      * Create a client instance with a bearer token.
+     *
+     * @param string $bearerToken The API bearer token for authentication
      */
-    public static function create(
-        string $bearerToken,
-        HttpClientInterface $httpClient,
-        RequestFactoryInterface $requestFactory,
-        StreamFactoryInterface $streamFactory,
-        string $baseUri = 'https://rest.calisero.ro/api/v1',
-        ?IdempotencyKeyProviderInterface $idempotencyKeyProvider = null
-    ): self {
+    public static function create(string $bearerToken): self
+    {
+        $baseHttpClient = new BaseHttpClient(30, 10);
+        $httpFactory = new HttpFactory();
         $authProvider = new BearerTokenAuthProvider($bearerToken);
+        $idempotencyKeyProvider = new UuidIdempotencyKeyProvider();
 
-        return new self(
-            $httpClient,
-            $requestFactory,
-            $streamFactory,
+        $httpClient = new HttpClient(
+            $baseHttpClient,
+            $httpFactory,
             $authProvider,
-            $baseUri,
+            'https://rest.calisero.ro/api/v1',
             $idempotencyKeyProvider
         );
+
+        return new self($httpClient);
     }
 
     /**

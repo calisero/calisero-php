@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\NotFoundException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
@@ -19,17 +19,13 @@ $bearerToken = 'your-api-key-here';
 $phoneNumber = '+40742***350';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $optOutService = $client->optOuts();
-
     echo "=== Delete OptOut ===\n\n";
 
     // First, let's check if the opt-out exists
     echo "1️⃣ Checking current opt-out status...\n";
 
     try {
-        $currentResponse = $optOutService->get($phoneNumber);
+        $currentResponse = SmsClient::create($bearerToken)->optOuts()->get($phoneNumber);
         $currentOptOut = $currentResponse->getData();
 
         echo "✅ Opt-out found:\n";
@@ -45,7 +41,7 @@ try {
 
     // Delete the opt-out
     echo "2️⃣ Removing opt-out (re-enabling SMS delivery)...\n";
-    $optOutService->delete($phoneNumber);
+    SmsClient::create($bearerToken)->optOuts()->delete($phoneNumber);
 
     echo "✅ Opt-out deleted successfully!\n";
     echo "📱 Phone number: {$phoneNumber}\n";
@@ -55,7 +51,7 @@ try {
     echo "\n3️⃣ Verifying deletion...\n";
 
     try {
-        $optOutService->get($phoneNumber);
+        SmsClient::create($bearerToken)->optOuts()->get($phoneNumber);
         echo "⚠️ Opt-out still exists (this may be expected behavior for some APIs)\n";
     } catch (NotFoundException $e) {
         echo "✅ Confirmed: Opt-out has been completely removed\n";

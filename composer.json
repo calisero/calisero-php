@@ -11,18 +11,13 @@
     ],
     "require": {
         "php": "^7.4 || ^8.0",
-        "guzzlehttp/guzzle": "^7.8 || ^7.9 || ^8.0",
-        "http-interop/http-factory-guzzle": "^1.2",
-        "ext-json": "*"
+        "ext-json": "*",
+        "ext-curl": "*"
     },
     "require-dev": {
-        "php-http/discovery": "^1.19",
         "phpunit/phpunit": "^9.6 || ^10.0",
         "phpstan/phpstan": "^1.11",
         "friendsofphp/php-cs-fixer": "^3.59"
-    },
-    "suggest": {
-        "php-http/discovery": "For additional HTTP client discovery capabilities"
     },
     "autoload": {
         "psr-4": {
@@ -48,10 +43,7 @@
         ]
     },
     "config": {
-        "sort-packages": true,
-        "allow-plugins": {
-            "php-http/discovery": true
-        }
+        "sort-packages": true
     },
     "minimum-stability": "stable",
     "prefer-stable": true

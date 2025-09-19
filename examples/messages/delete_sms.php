@@ -12,16 +12,12 @@ use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\ForbiddenException;
 use Calisero\Sms\Exceptions\NotFoundException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $messageService = $client->messages();
-
     echo "=== Delete SMS Message ===\n\n";
 
     // First, create a scheduled message that we can delete
@@ -34,7 +30,10 @@ try {
         date('Y-m-d H:i:s', strtotime('+1 day')) // schedule for tomorrow
     );
 
-    $createResponse = $messageService->create($request);
+    // Create scheduled message using fluent chaining
+    $createResponse = SmsClient::create($bearerToken)
+        ->messages()
+        ->create($request);
     $message = $createResponse->getData();
     $messageId = $message->getId();
 
@@ -45,7 +44,7 @@ try {
 
     // Now delete the message
     echo "2️⃣ Deleting the scheduled message...\n";
-    $messageService->delete($messageId);
+    SmsClient::create($bearerToken)->messages()->delete($messageId);
 
     echo "✅ Message deleted successfully!\n";
     echo "💡 The message '{$messageId}' has been cancelled and will not be sent\n";
@@ -54,7 +53,7 @@ try {
     echo "\n3️⃣ Verifying deletion...\n";
 
     try {
-        $messageService->get($messageId);
+        SmsClient::create($bearerToken)->messages()->get($messageId);
         echo "⚠️ Message still exists (some APIs may keep deleted messages with different status)\n";
     } catch (NotFoundException $e) {
         echo "✅ Confirmed: Message no longer exists\n";

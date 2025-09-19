@@ -9,20 +9,16 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Calisero\Sms\Exceptions\ApiException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $optOutService = $client->optOuts();
-
     echo "=== List OptOuts ===\n\n";
 
     // List opt-outs (first page)
-    $response = $optOutService->list();
+    $response = SmsClient::create($bearerToken)->optOuts()->list();
     $optOuts = $response->getData();
     $meta = $response->getMeta();
     $links = $response->getLinks();
@@ -69,7 +65,7 @@ try {
     // Example: Get next page if available
     if ($links->getNext()) {
         echo "\n📄 Getting next page...\n";
-        $nextPageResponse = $optOutService->list(2);
+        $nextPageResponse = SmsClient::create($bearerToken)->optOuts()->list(2);
         echo '✅ Next page retrieved with ' . count($nextPageResponse->getData()) . " opt-outs\n";
     }
 

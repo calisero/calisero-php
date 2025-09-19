@@ -19,7 +19,7 @@ use Calisero\Sms\Exceptions\ServerException;
 use Calisero\Sms\Exceptions\TransportException;
 use Calisero\Sms\Exceptions\UnauthorizedException;
 use Calisero\Sms\Exceptions\ValidationException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
@@ -30,11 +30,8 @@ echo "=== Comprehensive Error Handling Examples ===\n\n";
 echo "1️⃣ Testing Authentication Errors...\n";
 
 try {
-    $invalidClient = Sms::client('invalid-token');
-    $messageService = $invalidClient->messages();
-
     $request = new CreateMessageRequest('+40742***350', 'Test message');
-    $messageService->create($request);
+    SmsClient::create('invalid-token')->messages()->create($request);
 } catch (UnauthorizedException $e) {
     echo "✅ Caught UnauthorizedException (expected):\n";
     echo "   💬 Message: {$e->getMessage()}\n";
@@ -51,12 +48,9 @@ try {
 echo "2️⃣ Testing Validation Errors...\n";
 
 try {
-    $client = Sms::client($bearerToken);
-    $messageService = $client->messages();
-
     // Invalid phone number format
     $invalidRequest = new CreateMessageRequest('invalid-phone', '');
-    $messageService->create($invalidRequest);
+    SmsClient::create($bearerToken)->messages()->create($invalidRequest);
 } catch (ValidationException $e) {
     echo "✅ Caught ValidationException (expected):\n";
     echo "   💬 Message: {$e->getMessage()}\n";
@@ -80,11 +74,8 @@ try {
 echo "3️⃣ Testing Not Found Errors...\n";
 
 try {
-    $client = Sms::client($bearerToken);
-    $messageService = $client->messages();
-
     // Try to get a non-existent message
-    $messageService->get('non-existent-message-id');
+    SmsClient::create($bearerToken)->messages()->get('non-existent-message-id');
 } catch (NotFoundException $e) {
     echo "✅ Caught NotFoundException (expected):\n";
     echo "   💬 Message: {$e->getMessage()}\n";
@@ -101,12 +92,9 @@ try {
 echo "4️⃣ Testing Forbidden Errors...\n";
 
 try {
-    $client = Sms::client($bearerToken);
-    $messageService = $client->messages();
-
     // This might trigger a forbidden error if the account doesn't have permissions
     // or if trying to delete a message that cannot be deleted
-    $messageService->delete('some-message-id');
+    SmsClient::create($bearerToken)->messages()->delete('some-message-id');
 } catch (ForbiddenException $e) {
     echo "✅ Caught ForbiddenException (might occur):\n";
     echo "   💬 Message: {$e->getMessage()}\n";

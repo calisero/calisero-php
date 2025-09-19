@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\NotFoundException;
 use Calisero\Sms\Exceptions\UnauthorizedException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
@@ -20,14 +20,10 @@ $bearerToken = 'your-api-key-here';
 $accountId = 'acc_1234567890';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $accountService = $client->accounts();
-
     echo "=== Get Account Information ===\n\n";
 
     // Get account information
-    $response = $accountService->get($accountId);
+    $response = SmsClient::create($bearerToken)->accounts()->get($accountId);
     $account = $response->getData();
 
     echo "✅ Account information retrieved successfully!\n\n";

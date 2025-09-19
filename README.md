@@ -15,19 +15,20 @@ Send SMS messages, manage opt-outs for GDPR compliance, and monitor your account
 
 - 🚀 **Simple & Intuitive**: Easy-to-use API with clean factory methods
 - 🔒 **Type Safe**: Full PHP type declarations and PHPStan level 9 compliance  
-- 🌐 **HTTP Client Included**: Uses reliable Guzzle HTTP client out of the box
+- 🌐 **Self-Contained**: Built-in HTTP client using cURL, no external dependencies
 - 🔄 **Idempotency**: Built-in idempotency key generation for safe retries
 - 📱 **Complete API Coverage**: All Calisero SMS API endpoints supported
 - 🛡️ **Error Handling**: Comprehensive exception hierarchy for different error types
 - 📖 **Rich Examples**: 14+ working examples covering every use case
 - ⚡ **Zero Configuration**: Works immediately after installation
 - 🏗️ **Production Ready**: Used in production by businesses worldwide
+- � **Minimal Dependencies**: Only requires PHP and basic extensions
 
 ## Requirements
 
 - PHP 7.4 or higher
 - `ext-json` extension
-- `ext-curl` extension (for HTTP requests)
+- `ext-curl` extension
 
 ## Installation
 
@@ -37,7 +38,7 @@ Install the library via Composer:
 composer require calisero/calisero-php
 ```
 
-The library uses Guzzle HTTP client and includes all necessary dependencies automatically.
+That's it! The library includes its own HTTP client implementation and requires no additional dependencies.
 
 ## Getting Your API Key
 
@@ -68,15 +69,16 @@ From the API Keys section in your dashboard, you can:
 ### Basic SMS Sending
 
 ```php
+```php
 <?php
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateMessageRequest;
 
-// Create a client with your API key
-$client = Sms::client('your-api-key-here');
+// Create the SMS client
+$client = SmsClient::create('your-api-key-here');
 
 // Send a simple SMS
 $request = new CreateMessageRequest(
@@ -106,10 +108,10 @@ CALISERO_API_KEY=your-api-key-here
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // In your application
-$client = Sms::client($_ENV['CALISERO_API_KEY']);
+$client = SmsClient::create($_ENV['CALISERO_API_KEY']);
 ```
 
 ## 🎯 Common Use Cases
@@ -120,10 +122,10 @@ $client = Sms::client($_ENV['CALISERO_API_KEY']);
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateMessageRequest;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $request = new CreateMessageRequest(
     recipient: $userPhoneNumber,
@@ -143,10 +145,10 @@ echo "OTP sent! Message ID: " . $response->getData()->getId() . "\n";
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateMessageRequest;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $request = new CreateMessageRequest(
     recipient: $customerPhone,
@@ -165,11 +167,11 @@ echo "Order notification sent!\n";
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Exceptions\NotFoundException;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 // Check if user is opted out first
 try {
@@ -195,10 +197,10 @@ try {
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateMessageRequest;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $request = new CreateMessageRequest(
     recipient: '+40742***350',
@@ -223,9 +225,9 @@ echo "Advanced message created with ID: " . $response->getData()->getId() . "\n"
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 ```
 
 ### Custom Authentication Provider
@@ -236,7 +238,6 @@ $client = Sms::client('your-api-key-here');
 require_once 'vendor/autoload.php';
 
 use Calisero\Sms\Contracts\AuthProviderInterface;
-use Calisero\Sms\SmsClient;
 
 class CustomAuthProvider implements AuthProviderInterface
 {
@@ -247,14 +248,8 @@ class CustomAuthProvider implements AuthProviderInterface
     }
 }
 
-// Note: This requires using SmsClient directly
-$authProvider = new CustomAuthProvider();
-$client = new SmsClient(
-    $httpClient, 
-    $requestFactory, 
-    $streamFactory, 
-    $authProvider
-);
+// Note: Custom auth providers require direct SmsClient usage
+// Contact support@calisero.ro for advanced authentication examples
 ```
 
 ## 📚 Examples
@@ -315,10 +310,10 @@ This library includes comprehensive examples for all operations. Check the [`exa
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateMessageRequest;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $request = new CreateMessageRequest(
     recipient: '+40742***350',
@@ -340,9 +335,9 @@ echo $message->getParts();     // Number of SMS parts
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $response = $client->messages()->get('message-uuid-here');
 $message = $response->getData();
@@ -361,9 +356,9 @@ echo $message->getDeliveredAt();
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 // Get first page
 $response = $client->messages()->list();
@@ -389,10 +384,10 @@ if ($response->getLinks()->getNext()) {
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Exceptions\ForbiddenException;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 try {
     $client->messages()->delete('message-uuid-here');
@@ -411,10 +406,10 @@ try {
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateOptOutRequest;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $request = new CreateOptOutRequest(
     phone: '+40742***350',
@@ -432,9 +427,9 @@ echo "Opt-out created with ID: " . $response->getData()->getId() . "\n";
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $response = $client->optOuts()->list();
 
@@ -450,10 +445,10 @@ foreach ($response->getData() as $optOut) {
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\UpdateOptOutRequest;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $request = new UpdateOptOutRequest(
     phone: '+40742***350',
@@ -471,9 +466,9 @@ echo "Opt-out updated successfully\n";
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $client->optOuts()->delete('optout-uuid-here');
 echo "Opt-out deleted successfully\n";
@@ -488,9 +483,9 @@ echo "Opt-out deleted successfully\n";
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $response = $client->accounts()->get('account-uuid-here');
 $account = $response->getData();
@@ -510,7 +505,7 @@ The library provides specific exception types for different error scenarios:
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Exceptions\{
     ApiException,
@@ -523,7 +518,7 @@ use Calisero\Sms\Exceptions\{
     TransportException
 };
 
-$client = Sms::client('your-api-key-here');
+$client = SmsClient::create('your-api-key-here');
 
 $request = new CreateMessageRequest(
     recipient: '+40742***350',
@@ -561,55 +556,22 @@ try {
 
 ## Advanced Configuration
 
-### Custom HTTP Client
+### Simple Client Creation
+
+The library uses a simplified approach with built-in HTTP client:
 
 ```php
 <?php
 
 require_once 'vendor/autoload.php';
 
-use Calisero\Sms\Sms;
-use Calisero\Sms\Contracts\HttpClientInterface;
-use GuzzleHttp\Client as GuzzleClient;
+use Calisero\Sms\SmsClient;
 
-// Create a custom HTTP client wrapper
-$httpClient = new class(new GuzzleClient(['timeout' => 60])) implements HttpClientInterface {
-    private GuzzleClient $client;
-    
-    public function __construct(GuzzleClient $client) {
-        $this->client = $client;
-    }
-    
-    public function sendRequest($request) {
-        return $this->client->sendRequest($request);
-    }
-};
-
-$client = Sms::clientWith(
-    bearerToken: 'your-token',
-    httpClient: $httpClient
-);
+// Simple client creation - all you need
+$client = SmsClient::create('your-api-key-here');
 ```
 
-### Custom Options
-
-```php
-<?php
-
-require_once 'vendor/autoload.php';
-
-use Calisero\Sms\Sms;
-
-// Create client with custom Guzzle options
-$client = Sms::client(
-    bearerToken: 'your-token', 
-    baseUri: null,
-    options: [
-        'timeout' => 60,
-        'connect_timeout' => 10,
-    ]
-);
-```
+The library uses an optimized cURL-based HTTP client internally, providing excellent performance without external dependencies.
 
 ### Custom Idempotency Key Provider
 
@@ -629,7 +591,7 @@ class CustomIdempotencyProvider implements IdempotencyKeyProviderInterface
     }
 }
 
-// Note: This requires using SmsClient directly instead of Sms::client()
+// Note: This requires using SmsClient directly instead of SmsClient::create()
 $client = new SmsClient(
     $httpClient,
     $requestFactory,
@@ -668,8 +630,7 @@ composer qa
 
 // In your tests, you can mock the HTTP client
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Contracts\HttpClientInterface;
 
@@ -678,29 +639,15 @@ class YourSmsTest extends TestCase
     public function testSendMessage()
     {
         $mockClient = $this->createMock(HttpClientInterface::class);
-        $mockResponse = $this->createMock(ResponseInterface::class);
         
-        $mockResponse->method('getStatusCode')->willReturn(201);
-        $mockResponse->method('getBody')->willReturn(json_encode([
-            'data' => [
-                'id' => 'test-uuid',
-                'recipient' => '+40742***350',
-                'body' => 'Test message',
-                'status' => 'scheduled',
+        // Set up your mock expectations for testing
+        // Use the library's built-in interfaces for clean testing
+        
+        $client = SmsClient::create('test-token');
+        // ... your test implementation
+    }
+}
                 // ... other fields
-            ]
-        ]));
-        
-        $mockClient->method('sendRequest')->willReturn($mockResponse);
-        
-        // Create client with mocked dependencies
-        $client = Sms::clientWith('test-token', $mockClient);
-        
-        // Test your implementation
-        $request = new CreateMessageRequest('+40742***350', 'Test message');
-        $response = $client->messages()->create($request);
-        
-        $this->assertEquals('test-uuid', $response->getData()->getId());
     }
 }
 ```
@@ -718,6 +665,10 @@ If you discover any security-related issues, please email support@calisero.ro in
 This library is open-sourced software licensed under the [MIT license](LICENSE.md).
 
 ## Support
+
+- **Documentation**: [Official API Docs](https://docs.calisero.ro/)  
+- **GitHub Issues**: [Report Issues](https://github.com/calisero/calisero-php/issues)  
+- **Email Support**: support@calisero.ro
 
 - 📧 Email: support@calisero.ro
 - 📖 Documentation: [https://docs.calisero.ro](https://docs.calisero.ro)

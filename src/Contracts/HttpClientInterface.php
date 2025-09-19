@@ -4,9 +4,16 @@ declare(strict_types=1);
 
 namespace Calisero\Sms\Contracts;
 
-use Psr\Http\Client\ClientInterface;
+use Calisero\Sms\Http\RequestInterface;
+use Calisero\Sms\Http\ResponseInterface;
 
 /**
- * PSR-18 HTTP client interface extension for the SMS API.
+ * HTTP client interface for SMS API operations.
  */
-interface HttpClientInterface extends ClientInterface {}
+interface HttpClientInterface
+{
+    /**
+     * Send an HTTP request and return a response.
+     */
+    public function sendRequest(RequestInterface $request): ResponseInterface;
+}

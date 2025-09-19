@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\NotFoundException;
-use Calisero\Sms\Sms;
+use Calisero\Sms\SmsClient;
 
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
@@ -19,14 +19,13 @@ $bearerToken = 'your-api-key-here';
 $messageId = 'msg_1234567890';
 
 try {
-    // Create the SMS client
-    $client = Sms::client($bearerToken);
-    $messageService = $client->messages();
-
     echo "=== Get SMS Message ===\n\n";
 
-    // Get message details
-    $response = $messageService->get($messageId);
+    // Get message details using fluent chaining
+    $response = SmsClient::create($bearerToken)
+        ->messages()
+        ->get($messageId);
+
     $message = $response->getData();
 
     echo "✅ Message retrieved successfully!\n";
