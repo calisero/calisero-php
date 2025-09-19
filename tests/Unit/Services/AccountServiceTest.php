@@ -15,7 +15,9 @@ class AccountServiceTest extends TestCase
 {
     /** @var HttpClient&MockObject */
     private $httpClient;
-    private AccountService $accountService;
+
+    /** @var AccountService */
+    private $accountService;
 
     protected function setUp(): void
     {

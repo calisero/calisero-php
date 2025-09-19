@@ -29,7 +29,7 @@ class BaseHttpClient implements HttpClientInterface
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
         $curl = \curl_init();
-        if (!$curl) {
+        if ($curl === false) {
             throw new ClientException('Failed to initialize cURL');
         }
 

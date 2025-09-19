@@ -30,7 +30,9 @@ class HttpClientTest extends TestCase
 
     /** @var IdempotencyKeyProviderInterface&MockObject */
     private $idempotencyKeyProvider;
-    private HttpClient $client;
+
+    /** @var HttpClient */
+    private $client;
 
     protected function setUp(): void
     {

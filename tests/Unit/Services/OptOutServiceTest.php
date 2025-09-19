@@ -21,7 +21,9 @@ class OptOutServiceTest extends TestCase
 {
     /** @var HttpClient&MockObject */
     private $httpClient;
-    private OptOutService $optOutService;
+
+    /** @var OptOutService */
+    private $optOutService;
 
     protected function setUp(): void
     {

@@ -20,7 +20,9 @@ class MessageServiceTest extends TestCase
 {
     /** @var HttpClient&MockObject */
     private $httpClient;
-    private MessageService $messageService;
+
+    /** @var MessageService */
+    private $messageService;
 
     protected function setUp(): void
     {
