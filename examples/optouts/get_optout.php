@@ -19,9 +19,7 @@ $bearerToken = 'your-api-key-here';
 $phoneNumber = '+40742***350';
 
 try {
-    echo "=== Get OptOut ===
-
-";
+    echo '=== Get OptOut ===';
 
     // Fetch the opt-out by ID
     $response = SmsClient::create($bearerToken)->optOuts()->get($optOutId);

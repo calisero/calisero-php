@@ -41,13 +41,14 @@ class HttpClient
         $this->baseUri = \rtrim($baseUri, '/');
         $this->idempotencyKeyProvider = $idempotencyKeyProvider;
     }
-    
+
     /**
      * Send a GET request.
      *
      * @param array<string, mixed> $queryParams
      *
      * @return array<string, mixed>
+     *
      * @throws TransportException
      */
     public function get(string $path, array $queryParams = []): array
