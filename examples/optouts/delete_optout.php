@@ -15,8 +15,8 @@ use Calisero\Sms\SmsClient;
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
 
-// Replace with the phone number to remove from opt-out list
-$phoneNumber = '+40742***350';
+// Replace with the opt-out ID to delete
+$optOutId = 'opt_1234567890abcdef';
 
 try {
     echo "=== Delete OptOut ===\n\n";
@@ -25,25 +25,29 @@ try {
     echo "1️⃣ Checking current opt-out status...\n";
 
     try {
-        $currentResponse = SmsClient::create($bearerToken)->optOuts()->get($phoneNumber);
+        $currentResponse = SmsClient::create($bearerToken)->optOuts()->get($optOutId);
         $currentOptOut = $currentResponse->getData();
 
         echo "✅ Opt-out found:\n";
+        echo "   🆔 ID: {$currentOptOut->getId()}\n";
         echo "   📱 Phone: {$currentOptOut->getPhone()}\n";
         echo '   📝 Reason: ' . ($currentOptOut->getReason() ?? 'Not specified') . "\n";
         echo "   ⏰ Created: {$currentOptOut->getCreatedAt()}\n\n";
+
+        $phoneNumber = $currentOptOut->getPhone();
     } catch (NotFoundException $e) {
-        echo "✅ No opt-out found for {$phoneNumber}\n";
-        echo "💡 This phone number is already able to receive messages\n";
+        echo "❌ No opt-out found with ID: {$optOutId}\n";
+        echo "💡 Make sure the opt-out ID is correct\n";
 
         return;
     }
 
     // Delete the opt-out
     echo "2️⃣ Removing opt-out (re-enabling SMS delivery)...\n";
-    SmsClient::create($bearerToken)->optOuts()->delete($phoneNumber);
+    SmsClient::create($bearerToken)->optOuts()->delete($optOutId);
 
     echo "✅ Opt-out deleted successfully!\n";
+    echo "🆔 OptOut ID: {$optOutId}\n";
     echo "📱 Phone number: {$phoneNumber}\n";
     echo "💡 This phone number can now receive SMS messages again\n";
 
@@ -51,7 +55,7 @@ try {
     echo "\n3️⃣ Verifying deletion...\n";
 
     try {
-        SmsClient::create($bearerToken)->optOuts()->get($phoneNumber);
+        SmsClient::create($bearerToken)->optOuts()->get($optOutId);
         echo "⚠️ Opt-out still exists (this may be expected behavior for some APIs)\n";
     } catch (NotFoundException $e) {
         echo "✅ Confirmed: Opt-out has been completely removed\n";
@@ -64,8 +68,8 @@ try {
     echo "  - 💡 The customer can opt-out again if needed\n";
 } catch (NotFoundException $e) {
     echo "❌ OptOut not found: {$e->getMessage()}\n";
-    echo "💡 The phone number {$phoneNumber} doesn't have an opt-out record\n";
-    echo "💡 This means it can already receive messages\n";
+    echo "💡 The opt-out ID {$optOutId} doesn't exist\n";
+    echo "💡 The phone number may already be able to receive messages\n";
 } catch (ApiException $e) {
     echo "❌ API error: {$e->getMessage()}\n";
 

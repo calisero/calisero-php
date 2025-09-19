@@ -17,8 +17,8 @@ use Calisero\Sms\SmsClient;
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
 
-// Replace with the phone number to update
-$phoneNumber = '+40742***350';
+// Replace with the opt-out ID to update
+$optOutId = 'opt_1234567890abcdef';
 
 try {
     echo "=== Update OptOut ===\n\n";
@@ -27,7 +27,7 @@ try {
     echo "1️⃣ Checking current opt-out status...\n";
 
     try {
-        $currentResponse = SmsClient::create($bearerToken)->optOuts()->get($phoneNumber);
+        $currentResponse = SmsClient::create($bearerToken)->optOuts()->get($optOutId);
         $currentOptOut = $currentResponse->getData();
 
         echo "✅ Current opt-out found:\n";
@@ -36,7 +36,7 @@ try {
         echo "   ⏰ Created: {$currentOptOut->getCreatedAt()}\n";
         echo "   🔄 Last updated: {$currentOptOut->getUpdatedAt()}\n\n";
     } catch (NotFoundException $e) {
-        echo "❌ No opt-out found for {$phoneNumber}\n";
+        echo "❌ No opt-out found for {$optOutId}\n";
         echo "💡 You need to create an opt-out first before updating it\n";
 
         return;
@@ -45,10 +45,11 @@ try {
     // Update the opt-out reason
     echo "2️⃣ Updating opt-out reason...\n";
     $updateRequest = new UpdateOptOutRequest(
+        $currentOptOut->getPhone(),
         'Updated: Customer called support and confirmed they want to remain opted out due to privacy concerns'
     );
 
-    $updateResponse = SmsClient::create($bearerToken)->optOuts()->update($phoneNumber, $updateRequest);
+    $updateResponse = SmsClient::create($bearerToken)->optOuts()->update($optOutId, $updateRequest);
     $updatedOptOut = $updateResponse->getData();
 
     echo "✅ Opt-out updated successfully!\n";
@@ -61,7 +62,7 @@ try {
     echo "\n💡 The opt-out record has been updated with new information\n";
 } catch (NotFoundException $e) {
     echo "❌ OptOut not found: {$e->getMessage()}\n";
-    echo "💡 Make sure the phone number {$phoneNumber} has an existing opt-out record\n";
+    echo "💡 Make sure the opt-out ID is existing opt-out record\n";
 } catch (ValidationException $e) {
     echo "❌ Validation error: {$e->getMessage()}\n";
 

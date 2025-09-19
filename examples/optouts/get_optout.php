@@ -15,11 +15,11 @@ use Calisero\Sms\SmsClient;
 // Replace with your actual API key
 $bearerToken = 'your-api-key-here';
 
-// Replace with the phone number to check
-$phoneNumber = '+40742***350';
+// Replace with the opt-out ID to retrieve
+$optOutId = 'opt_1234567890abcdef';
 
 try {
-    echo '=== Get OptOut ===';
+    echo "=== Get OptOut ===\n\n";
 
     // Fetch the opt-out by ID
     $response = SmsClient::create($bearerToken)->optOuts()->get($optOutId);
@@ -34,8 +34,8 @@ try {
 
     echo "\n🚫 This phone number is currently opted out from receiving SMS messages\n";
 } catch (NotFoundException $e) {
-    echo "✅ No opt-out found for {$phoneNumber}\n";
-    echo "💡 This phone number can receive SMS messages\n";
+    echo "❌ No opt-out found with ID: {$optOutId}\n";
+    echo "💡 Make sure the opt-out ID exists\n";
 } catch (ApiException $e) {
     echo "❌ API error: {$e->getMessage()}\n";
 
