@@ -5,6 +5,26 @@ All notable changes to `calisero-php` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2025-09-19
+
+### Fixed
+- **HTTP status code mapping**: Corrected incorrect 422 status code handling in HttpClient
+  - Fixed `422 Unprocessable Entity` responses that were being incorrectly mapped to `ApiException`
+  - Now properly maps `422` to `ValidationException` as intended for validation errors
+- **OptOut examples**: Fixed critical issues in all opt-out management examples
+  - Fixed undefined `$optOutId` variable in `get_optout.php`
+  - Removed exposed API key security issue in `update_optout.php`
+  - Fixed `delete_optout.php` to use opt-out ID instead of incorrect phone number parameter
+  - Updated all opt-out examples to follow consistent ID-based API patterns
+- **ValidationException**: Enhanced error handling to properly extract field-specific validation errors
+  - Fixed parameter separation between general errors and validation-specific field errors
+  - Improved error message extraction from API responses
+
+### Improved
+- **Error handling**: Better validation error processing with proper field-level error extraction
+- **Example consistency**: All opt-out examples now follow the same ID-based pattern for better developer experience
+- **Security**: Removed hardcoded API keys from example files
+
 ## [2.0.0] - 2025-09-19
 
 ### Added
@@ -14,13 +34,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fluent API chaining**: Clean, readable method chaining (`SmsClient::create()->messages()->create()`)
 - **Factory methods**: 
   - `SmsClient::create()` - Create SMS client with bearer token and optional configuration
+- **Cross-version PHP support**: Enhanced compatibility configuration for PHP 7.4-8.4
+- **Proper validation error handling**: Separated general errors from field-specific validation errors
 
 ### Changed
 - **BREAKING**: Removed all external dependencies (Guzzle, PSR interfaces, stream abstractions)
 - **BREAKING**: Removed wrapper classes (`Sms` class) - use `SmsClient::create()` directly
+- **BREAKING**: HTTP status code mapping corrected:
+  - `400 Bad Request` → `ApiException` (was incorrectly mapped to ValidationException)
+  - `422 Unprocessable Entity` → `ValidationException` (proper validation error status)
 - **Architecture**: Completely rewritten for minimal footprint and maximum simplicity
 - **Dependencies**: Now requires only `php ^7.4||^8.0`, `ext-json`, and `ext-curl`
 - **API style**: All examples updated to use fluent method chaining for better readability
+- **Test compatibility**: Updated test files to use PHPDoc annotations instead of typed properties for broader PHP 7.4+ compatibility
 
 ### Improved
 - **Zero dependencies**: No more version conflicts or complex dependency trees
@@ -28,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Smaller footprint**: Significantly reduced library size and complexity
 - **Better readability**: Fluent chaining makes code more concise and easier to understand
 - **Universal compatibility**: Works with any PHP setup without external requirements
+- **Validation error handling**: `ValidationException` now properly extracts and exposes field-specific validation errors via `getValidationErrors()` method
+- **PHPStan compatibility**: Added `treatPhpDocTypesAsCertain: false` for cross-version type checking
+- **OptOut examples**: Fixed all undefined variables and incorrect API usage patterns
 
 ### Removed
 - **BREAKING**: All PSR interfaces and stream abstractions (unnecessary complexity)
@@ -41,13 +70,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Installation complexity**: Now works out-of-the-box with zero configuration
 - **Memory overhead**: Reduced by removing abstraction layers
 - **Import statements**: Fixed missing use statements for HTTP interfaces in HttpClient class
+- **HTTP status codes**: Corrected 400/422 status code mapping to follow REST API standards
+- **Validation errors**: Fixed ValidationException to properly separate error details from validation-specific field errors
+- **PHP compatibility**: Fixed cURL initialization check for compatibility across PHP 7.4-8.4
+- **OptOut examples**: 
+  - Fixed undefined `$optOutId` variable in `get_optout.php`
+  - Removed exposed API key from `update_optout.php`
+  - Fixed `delete_optout.php` to use opt-out ID instead of phone number
+  - Updated all examples to follow consistent ID-based API patterns
+- **Cross-version compatibility**: Enhanced PHPStan configuration and cURL handling for PHP 7.4-8.4
 
 ### Technical Details
 - Implemented native cURL-based HTTP client with authentication and error handling
 - Simplified request/response handling using string bodies instead of streams
 - Updated all examples to demonstrate fluent method chaining patterns
 - Maintained 100% backward compatibility for core API methods
-- All tests still pass (84 tests, 514 assertions) with new simplified architecture
+- Enhanced test suite: 86 tests, 528 assertions with comprehensive coverage
+- Added proper HTTP status code semantics following REST API standards
+- Implemented smart validation error extraction supporting multiple API response formats
+- Added cross-version PHP compatibility measures for type checking and cURL handling
 
 ## [1.0.3] - 2025-09-18
 
