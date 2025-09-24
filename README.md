@@ -23,6 +23,7 @@ Send SMS messages, manage opt-outs for GDPR compliance, and monitor your account
 - ⚡ **Zero Configuration**: Works immediately after installation
 - 🏗️ **Production Ready**: Used in production by businesses worldwide
 - � **Minimal Dependencies**: Only requires PHP and basic extensions
+- 🎯 **Laravel Integration**: Official Laravel wrapper `calisero/laravel-sms` available
 
 ## Requirements
 
