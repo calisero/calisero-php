@@ -70,7 +70,6 @@ From the API Keys section in your dashboard, you can:
 ### Basic SMS Sending
 
 ```php
-```php
 <?php
 
 require_once 'vendor/autoload.php';
