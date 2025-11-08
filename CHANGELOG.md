@@ -5,6 +5,23 @@ All notable changes to `calisero-php` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-11-08
+
+### Added
+- Verifications API support:
+  - `VerificationService` with methods: `list`, `create`, `get`, `validate`
+  - New DTOs: `Verification`, `PaginatedVerifications`, `CreateVerificationRequest`, `CreateVerificationResponse`, `GetVerificationResponse`, `VerificationCheckRequest`
+  - `SmsClient::verifications()` accessor
+- Examples for verifications:
+  - `examples/verifications/create_verification.php`
+  - `examples/verifications/get_verification.php`
+  - `examples/verifications/list_verifications.php`
+  - `examples/verifications/validate_verification.php`
+- Unit tests for `VerificationService` covering list/create/get/validate
+
+### Changed
+- Updated README with new "Verification Examples (OTP)" section and usage
+
 ## [2.0.1] - 2025-09-19
 
 ### Fixed
