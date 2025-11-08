@@ -271,6 +271,12 @@ This library includes comprehensive examples for all operations. Check the [`exa
 - **[`examples/optouts/update_optout.php`](examples/optouts/update_optout.php)** - Update opt-out reasons
 - **[`examples/optouts/delete_optout.php`](examples/optouts/delete_optout.php)** - Remove opt-out (re-enable SMS)
 
+### ✅ Verification Examples (OTP)
+- **[`examples/verifications/create_verification.php`](examples/verifications/create_verification.php)** - Start a verification (send OTP)
+- **[`examples/verifications/get_verification.php`](examples/verifications/get_verification.php)** - Retrieve verification details
+- **[`examples/verifications/list_verifications.php`](examples/verifications/list_verifications.php)** - List verifications with pagination and status filter
+- **[`examples/verifications/validate_verification.php`](examples/verifications/validate_verification.php)** - Validate an OTP code for a phone number
+
 ### 👤 Account Examples
 - **[`examples/account/get_account.php`](examples/account/get_account.php)** - Get account information and details
 - **[`examples/account/check_balance.php`](examples/account/check_balance.php)** - Check balance with analysis and recommendations

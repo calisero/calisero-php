@@ -12,6 +12,7 @@ use Calisero\Sms\IdempotencyKey\UuidIdempotencyKeyProvider;
 use Calisero\Sms\Services\AccountService;
 use Calisero\Sms\Services\MessageService;
 use Calisero\Sms\Services\OptOutService;
+use Calisero\Sms\Services\VerificationService;
 
 /**
  * Main SMS API client.
@@ -22,6 +23,7 @@ class SmsClient
     private MessageService $messageService;
     private OptOutService $optOutService;
     private AccountService $accountService;
+    private VerificationService $verificationService;
 
     private function __construct(HttpClient $httpClient)
     {
@@ -29,6 +31,7 @@ class SmsClient
         $this->messageService = new MessageService($this->httpClient);
         $this->optOutService = new OptOutService($this->httpClient);
         $this->accountService = new AccountService($this->httpClient);
+        $this->verificationService = new VerificationService($this->httpClient);
     }
 
     /**
@@ -76,5 +79,13 @@ class SmsClient
     public function accounts(): AccountService
     {
         return $this->accountService;
+    }
+
+    /**
+     * Get the verifications service.
+     */
+    public function verifications(): VerificationService
+    {
+        return $this->verificationService;
     }
 }
