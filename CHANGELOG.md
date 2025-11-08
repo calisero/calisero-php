@@ -5,6 +5,12 @@ All notable changes to `calisero-php` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2025-11-09
+
+### Documentation
+- Updated `README.md` to include a new “Verifications (OTP)” section in the API Reference with four concise, copy‑pasteable snippets (create/get/list/validate).
+- Updated `examples/README.md` to add the Verifications examples and the directory tree entries.
+
 ## [2.1.0] - 2025-11-08
 
 ### Added

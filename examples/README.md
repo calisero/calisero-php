@@ -19,6 +19,11 @@ examples/
 │   ├── list_optouts.php           # List all opt-outs with pagination
 │   ├── update_optout.php          # Update opt-out reason/details
 │   └── delete_optout.php          # Remove opt-out (re-enable SMS)
+├── verifications/          # Phone verifications (OTP)
+│   ├── create_verification.php    # Start a verification (send OTP)
+│   ├── get_verification.php       # Retrieve verification details
+│   ├── list_verifications.php     # List verifications with pagination
+│   └── validate_verification.php  # Validate an OTP code
 ├── account/                # Account information
 │   ├── get_account.php            # Get account details
 │   └── check_balance.php          # Check account balance and status
@@ -87,6 +92,13 @@ For comprehensive error handling patterns, see `error_handling_complete.php`.
 - **list_optouts.php** - View all opted-out numbers
 - **update_optout.php** - Update opt-out reasons
 - **delete_optout.php** - Remove from opt-out list (re-enable SMS)
+
+## Verification Examples (OTP)
+
+- **create_verification.php** - Start a verification (send OTP)
+- **get_verification.php** - Retrieve verification details
+- **list_verifications.php** - List verifications with pagination and optional status filter
+- **validate_verification.php** - Validate an OTP code (displays API validation messages as returned)
 
 ## Account Examples
 
