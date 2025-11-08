@@ -19,32 +19,31 @@ class Verification
     private ?string $verifiedAt;
     private int $attempts;
     private bool $expired;
-    
+
     public function __construct(
-        string  $id,
-        string  $phone,
+        string $id,
+        string $phone,
         ?string $brand,
-        string  $status,
+        string $status,
         ?string $template,
-        string  $createdAt,
-        string  $expiresAt,
+        string $createdAt,
+        string $expiresAt,
         ?string $verifiedAt,
-        int     $attempts,
-        bool    $expired
-    )
-    {
-        $this->id         = $id;
-        $this->phone      = $phone;
-        $this->brand      = $brand;
-        $this->status     = $status;
-        $this->template   = $template;
-        $this->createdAt  = $createdAt;
-        $this->expiresAt  = $expiresAt;
+        int $attempts,
+        bool $expired
+    ) {
+        $this->id = $id;
+        $this->phone = $phone;
+        $this->brand = $brand;
+        $this->status = $status;
+        $this->template = $template;
+        $this->createdAt = $createdAt;
+        $this->expiresAt = $expiresAt;
         $this->verifiedAt = $verifiedAt;
-        $this->attempts   = $attempts;
-        $this->expired    = $expired;
+        $this->attempts = $attempts;
+        $this->expired = $expired;
     }
-    
+
     /**
      * @param array<string, mixed> $data
      */
@@ -57,7 +56,7 @@ class Verification
         \assert(\is_string($data['expires_at']));
         \assert(\is_int($data['attempts']));
         \assert(\is_bool($data['expired']));
-        
+
         return new self(
             $data['id'],
             $data['phone'],
@@ -71,52 +70,52 @@ class Verification
             $data['expired']
         );
     }
-    
+
     public function getId(): string
     {
         return $this->id;
     }
-    
+
     public function getPhone(): string
     {
         return $this->phone;
     }
-    
+
     public function getBrand(): ?string
     {
         return $this->brand;
     }
-    
+
     public function getStatus(): string
     {
         return $this->status;
     }
-    
+
     public function getTemplate(): ?string
     {
         return $this->template;
     }
-    
+
     public function getCreatedAt(): string
     {
         return $this->createdAt;
     }
-    
+
     public function getExpiresAt(): string
     {
         return $this->expiresAt;
     }
-    
+
     public function getVerifiedAt(): ?string
     {
         return $this->verifiedAt;
     }
-    
+
     public function getAttempts(): int
     {
         return $this->attempts;
     }
-    
+
     public function isExpired(): bool
     {
         return $this->expired;

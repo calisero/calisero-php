@@ -11,23 +11,23 @@ class VerificationCheckRequest
 {
     private string $phone;
     private string $code;
-    
+
     public function __construct(string $phone, string $code)
     {
         $this->phone = $phone;
-        $this->code  = $code;
+        $this->code = $code;
     }
-    
+
     public function getPhone(): string
     {
         return $this->phone;
     }
-    
+
     public function getCode(): string
     {
         return $this->code;
     }
-    
+
     /**
      * @return array<string, mixed>
      */
@@ -35,7 +35,7 @@ class VerificationCheckRequest
     {
         return [
             'phone' => $this->phone,
-            'code'  => $this->code,
+            'code' => $this->code,
         ];
     }
 }
