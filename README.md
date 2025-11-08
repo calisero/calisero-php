@@ -403,6 +403,102 @@ try {
 }
 ```
 
+### Verifications (OTP)
+
+#### Create a Verification
+
+```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\SmsClient;
+use Calisero\Sms\Dto\CreateVerificationRequest;
+
+$client = SmsClient::create('your-api-key-here');
+
+$request = new CreateVerificationRequest(
+    '+40742***350', // phone
+    'Calisero'      // optional brand used for default template
+);
+
+$response = $client->verifications()->create($request);
+$verification = $response->getData();
+
+echo $verification->getId();       // Verification UUID
+echo $verification->getPhone();    // Phone number
+echo $verification->getStatus();   // 'unverified' or 'verified'
+```
+
+#### Get Verification Details
+
+```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\SmsClient;
+
+$client = SmsClient::create('your-api-key-here');
+
+$response = $client->verifications()->get('verification-uuid-here');
+$verification = $response->getData();
+
+echo $verification->getStatus();      // Current status
+echo $verification->getVerifiedAt();  // Timestamp or null
+echo $verification->getExpiresAt();   // Expiry timestamp
+```
+
+#### List Verifications
+
+```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\SmsClient;
+
+$client = SmsClient::create('your-api-key-here');
+
+// Page 1, optionally filter by status: 'verified' or 'unverified'
+$response = $client->verifications()->list(1, null);
+
+foreach ($response->getData() as $v) {
+    echo $v->getId() . ' | ' . $v->getPhone() . ' | ' . $v->getStatus() . PHP_EOL;
+}
+
+// Pagination metadata
+echo 'Current page: ' . $response->getMeta()->getCurrentPage();
+if ($response->getLinks()->getNext()) {
+    // Fetch next page example
+    $next = $client->verifications()->list(2);
+}
+```
+
+#### Validate a Verification Code (OTP)
+
+```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\SmsClient;
+use Calisero\Sms\Dto\VerificationCheckRequest;
+
+$client = SmsClient::create('your-api-key-here');
+
+$request = new VerificationCheckRequest(
+    '+40742***350', // phone
+    'ABC123'        // 6-character code
+);
+
+$response = $client->verifications()->validate($request);
+$verification = $response->getData();
+
+echo $verification->getStatus();     // 'verified' (idempotent if already verified)
+echo $verification->getVerifiedAt(); // When it was verified
+```
+
 ### Opt-outs
 
 #### Create an Opt-out
