@@ -5,6 +5,53 @@ All notable changes to `calisero-php` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-09-12
+
+### Added
+- **PHP 8.5 support.** PHP 8.5 is now part of the CI test matrix alongside 7.4,
+  8.0, 8.1, 8.2, 8.3 and 8.4. The library source needed no changes: the full
+  test suite, PHPStan level 9 and PHP-CS-Fixer all run clean on PHP 8.5 with no
+  deprecation notices.
+
+### Changed
+- Widened the dev tool constraints so every supported PHP version resolves to a
+  toolchain that runs on it:
+  - `phpunit/phpunit` from `^9.6 || ^10.0` to `^9.6 || ^10.5 || ^11.5 || ^12.0`
+  - `friendsofphp/php-cs-fixer` from `^3.59` to `^3.75`
+- The CI "highest dependencies" leg now always runs `composer update` instead of
+  `composer install` on PHP 8.1+. A single lock file cannot satisfy PHP 7.4 and
+  PHP 8.5 at the same time, and `composer.lock` is not committed to this
+  repository, so `composer install` had no lock file to install from.
+- `phpunit.xml.dist` migrated to the PHPUnit 10.5 schema (`<source>` instead of
+  `<coverage><include>`, `cacheDirectory` instead of `cacheResultFile`). PHPUnit
+  11 and 12 reject the old elements outright.
+- The PHP 7.4 and 8.0 CI legs now run `composer test` rather than
+  `composer test-coverage`, since PHPUnit 9.6 does not understand the new
+  `<source>` element and would have no coverage filter. Coverage is still
+  collected and uploaded from PHP 8.1 upward.
+
+### Fixed
+- **Half the test suite was silently not running.** `phpunit.xml.dist` declared
+  two overlapping suites — `default` pointing at `tests` and `unit` pointing at
+  `tests/Unit`, which `tests` already contains. PHPUnit 10 executed both, so the
+  reported "94 tests" was the 47 real tests counted twice; PHPUnit 12 refuses
+  the overlap and skipped the second suite entirely. The redundant `default`
+  suite has been removed, leaving a single `unit` suite that runs all 47 tests
+  once.
+
+### Notes
+- `phpstan/phpstan` stays on `^1.12`, which runs correctly on PHP 8.5. PHPStan 2
+  infers `mixed` out of `json_decode()` more precisely and reports 27 pre-existing
+  type-safety findings in `src/Http/HttpClient.php` and the DTO `fromArray()`
+  methods. Those are unrelated to PHP 8.5 and are left for a separate change.
+- PHPUnit 12 emits 6 advisory notices suggesting `createStub()` over
+  `createMock()` in `HttpClientTest`. The suggested fix relies on attributes that
+  do not exist in PHPUnit 9.6, so it is deferred while PHP 7.4 is supported.
+- The PHP-CS-Fixer rule set is still spelled `@PHP74Migration`. Recent 3.9x
+  releases renamed it to `@PHP7x4Migration` and deprecate the old name, but the
+  new spelling does not exist in the versions the `--prefer-lowest` CI leg
+  installs, so the old name is kept until the floor is raised.
+
 ## [2.1.1] - 2025-11-09
 
 ### Documentation
