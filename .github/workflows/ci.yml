@@ -15,7 +15,7 @@ jobs:
     
     strategy:
       matrix:
-        php-version: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
+        php-version: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
         dependencies: ['lowest', 'highest']
         exclude:
           # Skip lowest dependencies on newer PHP versions to reduce matrix size
@@ -24,6 +24,8 @@ jobs:
           - php-version: '8.3'
             dependencies: 'lowest'
           - php-version: '8.4'
+            dependencies: 'lowest'
+          - php-version: '8.5'
             dependencies: 'lowest'
 
     steps:
@@ -54,12 +56,11 @@ jobs:
 
       - name: Install dependencies (highest)
         if: matrix.dependencies == 'highest'
-        run: |
-          if [[ "${{ matrix.php-version }}" == "7.4" || "${{ matrix.php-version }}" == "8.0" ]]; then
-            composer update --no-interaction --no-progress --prefer-dist --optimize-autoloader
-          else
-            composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
-          fi
+        # The dev tool constraints span several major versions (PHPUnit 9.6-12,
+        # PHPStan 1-2) so that every supported PHP version resolves to a
+        # toolchain that runs on it. A single committed lock file cannot satisfy
+        # PHP 7.4 and PHP 8.5 at once, so the "highest" leg always resolves.
+        run: composer update --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
       - name: Install dependencies (lowest)
         if: matrix.dependencies == 'lowest'
@@ -74,7 +75,15 @@ jobs:
       - name: Run static analysis
         run: composer stan
 
-      - name: Run tests
+      # phpunit.xml.dist uses the PHPUnit 10.5+ <source> element. PHP 7.4 and 8.0
+      # resolve to PHPUnit 9.6, which does not understand it and therefore has no
+      # coverage filter, so those legs run the suite without coverage.
+      - name: Run tests (no coverage)
+        if: matrix.php-version == '7.4' || matrix.php-version == '8.0'
+        run: composer test
+
+      - name: Run tests with coverage
+        if: matrix.php-version != '7.4' && matrix.php-version != '8.0'
         run: composer test-coverage
 
       - name: Upload coverage reports

@@ -24,12 +24,16 @@ Send SMS messages, manage opt-outs for GDPR compliance, and monitor your account
 - 🏗️ **Production Ready**: Used in production by businesses worldwide
 - � **Minimal Dependencies**: Only requires PHP and basic extensions
 - 🎯 **Laravel Integration**: Official Laravel wrapper `calisero/laravel-sms` available
+- 🐘 **Wide PHP Support**: Runs on PHP 7.4 through PHP 8.5
 
 ## Requirements
 
-- PHP 7.4 or higher
+- PHP 7.4 or higher — tested on **7.4, 8.0, 8.1, 8.2, 8.3, 8.4 and 8.5**
 - `ext-json` extension
 - `ext-curl` extension
+
+The library carries no runtime dependencies beyond those extensions, so it drops
+into any supported PHP version without a resolver conflict.
 
 ## Installation
 
