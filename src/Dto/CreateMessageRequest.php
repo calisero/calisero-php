@@ -16,6 +16,7 @@ class CreateMessageRequest
     private ?string $scheduleAt;
     private ?string $callbackUrl;
     private ?string $sender;
+    private ?bool $shortenUrls;
 
     public function __construct(
         string $recipient,
@@ -24,7 +25,8 @@ class CreateMessageRequest
         ?int $validity = null,
         ?string $scheduleAt = null,
         ?string $callbackUrl = null,
-        ?string $sender = null
+        ?string $sender = null,
+        ?bool $shortenUrls = null
     ) {
         $this->recipient = $recipient;
         $this->body = $body;
@@ -33,6 +35,7 @@ class CreateMessageRequest
         $this->scheduleAt = $scheduleAt;
         $this->callbackUrl = $callbackUrl;
         $this->sender = $sender;
+        $this->shortenUrls = $shortenUrls;
     }
 
     public function getRecipient(): string
@@ -71,6 +74,15 @@ class CreateMessageRequest
     }
 
     /**
+     * Whether the URLs of the body are shortened (and returned in the message's
+     * shortened URLs); null leaves it to the API, which does not shorten them.
+     */
+    public function getShortenUrls(): ?bool
+    {
+        return $this->shortenUrls;
+    }
+
+    /**
      * Convert the request to an array.
      *
      * @return array<string, mixed>
@@ -100,6 +112,10 @@ class CreateMessageRequest
 
         if ($this->sender !== null) {
             $data['sender'] = $this->sender;
+        }
+
+        if ($this->shortenUrls !== null) {
+            $data['shorten_urls'] = $this->shortenUrls;
         }
 
         return $data;

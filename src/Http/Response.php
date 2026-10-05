@@ -44,11 +44,22 @@ class Response implements ResponseInterface
     }
 
     /**
+     * Header names match case-insensitively, as HTTP defines them: cURL keeps the
+     * server's spelling, mixed case over HTTP/1.1 and lowercase over HTTP/2.
+     *
      * @return string[]
      */
     public function getHeader(string $name): array
     {
-        return $this->headers[\strtolower($name)] ?? [];
+        $values = [];
+
+        foreach ($this->headers as $headerName => $headerValues) {
+            if (\strcasecmp($headerName, $name) === 0) {
+                $values = \array_merge($values, $headerValues);
+            }
+        }
+
+        return $values;
     }
 
     public function getHeaderLine(string $name): string

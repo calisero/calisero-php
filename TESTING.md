@@ -1,220 +1,102 @@
-# Unit Tests for SMS API Endpoints
+# Testing
 
-This document provides an overview of the comprehensive unit tests created for all endpoints in the Calisero SMS API client library.
+The library's unit tests live in `tests/Unit` and run with PHPUnit. They make no
+network requests: the services run against a mocked `HttpClient`, and the HTTP
+layer against stub transports and real `Request` and `Response` objects.
 
-## Test Coverage Overview
-
-**Total Test Statistics: 114 tests with 552 assertions - 100% success rate**
-
-### Services Tested
-- **MessageService** - SMS message operations
-- **OptOutService** - Opt-out management for GDPR compliance  
-- **AccountService** - Account information retrieval
-- **SmsClient** - Main client class
-- **Sms** - Factory class for client creation
-- **DTOs** - Data transfer objects validation
-- **Auth** - Authentication providers
-- **IdempotencyKey** - Key generation utilities
-
-## Service Endpoint Tests
-
-### 1. MessageService Tests (`tests/Unit/Services/MessageServiceTest.php`)
-
-#### Endpoints Covered:
-- `POST /messages` - Create SMS message
-- `GET /messages/{id}` - Retrieve specific message
-- `GET /messages` - List messages with pagination
-- `DELETE /messages/{id}` - Delete/cancel message
-
-#### Test Cases:
-- ✅ **testCreateMessage** - Create message with full parameters
-- ✅ **testGetMessage** - Retrieve message details
-- ✅ **testListMessagesFirstPage** - List messages (page 1)
-- ✅ **testListMessagesSpecificPage** - List messages (specific page)
-- ✅ **testDeleteMessage** - Delete message
-- ✅ **testCreateMinimalMessage** - Create message with minimal data
-- ✅ **testCreateScheduledMessage** - Create scheduled message
-
-#### Features Tested:
-- Message creation with various parameters (recipient, body, sender, validity, scheduling, callbacks)
-- Message retrieval with status tracking
-- Pagination handling for message lists
-- Message deletion for scheduled messages
-- Idempotency support for message creation
-
-### 2. OptOutService Tests (`tests/Unit/Services/OptOutServiceTest.php`)
-
-#### Endpoints Covered:
-- `POST /opt-outs` - Create opt-out
-- `GET /opt-outs/{id}` - Retrieve specific opt-out
-- `GET /opt-outs` - List opt-outs with pagination
-- `PUT /opt-outs/{id}` - Update opt-out
-- `DELETE /opt-outs/{id}` - Delete opt-out
-
-#### Test Cases:
-- ✅ **testCreateOptOut** - Create opt-out with reason
-- ✅ **testCreateOptOutWithoutReason** - Create opt-out without reason
-- ✅ **testGetOptOut** - Retrieve opt-out details
-- ✅ **testListOptOutsFirstPage** - List opt-outs (page 1)
-- ✅ **testListOptOutsSpecificPage** - List opt-outs (specific page)
-- ✅ **testUpdateOptOut** - Update opt-out reason
-- ✅ **testUpdateOptOutWithoutReason** - Update opt-out (remove reason)
-- ✅ **testDeleteOptOut** - Delete opt-out
-- ✅ **testCreateOptOutWithLongReason** - Handle long reason text
-- ✅ **testListOptOutsEmptyResult** - Handle empty result set
-
-#### Features Tested:
-- GDPR-compliant opt-out management
-- Optional reason field handling
-- Pagination for opt-out lists
-- Opt-out updates and deletions
-- Long text handling for reasons
-- Empty result handling
-
-### 3. AccountService Tests (`tests/Unit/Services/AccountServiceTest.php`)
-
-#### Endpoints Covered:
-- `GET /accounts/{id}` - Retrieve account information
-
-#### Test Cases:
-- ✅ **testGetAccount** - Retrieve complete account info
-- ✅ **testGetAccountWithMinimalData** - Handle minimal account data
-- ✅ **testGetAccountWithLowCredit** - Test low credit account
-- ✅ **testGetInactiveAccount** - Test suspended account
-- ✅ **testGetAccountWithCompleteContactInfo** - Test all fields populated
-
-#### Features Tested:
-- Complete account information retrieval
-- Financial information (credit, IBAN, fiscal codes)
-- Contact information (email, phone, contact person)
-- Location data (address, city, state, country)
-- Account status (active, suspended, pending)
-- Account mode (sandbox/production flag from API)
-- Nullable field handling
-
-### 4. SmsClient Tests (`tests/Unit/SmsClientTest.php`)
-
-#### Test Cases:
-- ✅ **testConstructor** - Basic constructor
-- ✅ **testConstructorWithDefaultParameters** - Default parameters
-- ✅ **testCreateWithBearerToken** - Factory method with token
-- ✅ **testCreateWithCustomBaseUri** - Custom API endpoint
-- ✅ **testCreateWithIdempotencyKeyProvider** - Custom idempotency
-- ✅ **testMessagesServiceReturnsSameInstance** - Service singleton
-- ✅ **testOptOutsServiceReturnsSameInstance** - Service singleton
-- ✅ **testAccountsServiceReturnsSameInstance** - Service singleton
-- ✅ **testServiceInstancesAreDistinct** - Service separation
-
-#### Features Tested:
-- Client initialization with various configurations
-- Service access methods
-- Singleton pattern for services
-- Custom base URI configuration
-- Idempotency key provider integration
-- Bearer token authentication setup
-
-### 5. Sms Factory Tests (`tests/Unit/SmsTest.php`)
-
-#### Test Cases:
-- ✅ **testClientWithMinimalParameters** - Minimal client creation
-- ✅ **testClientWithCustomBaseUri** - Custom API endpoint
-- ✅ **testClientWithOptions** - HTTP client options
-- ✅ **testClientWithAllParameters** - Full configuration
-- ✅ **testClientWithCustomHttpClient** - Custom HTTP client
-- ✅ **testMultipleClientInstancesAreIndependent** - Instance independence
-- ✅ **testClientServicesAreAccessible** - Service accessibility
-- ✅ **testClientWithProductionLikeConfiguration** - Production setup
-- ✅ **testClientWithDevelopmentConfiguration** - Development setup
-
-#### Features Tested:
-- Factory method patterns
-- HTTP client configuration
-- Custom HTTP client injection
-- Multiple client instance management
-- Environment-specific configurations (production/development)
-- Default parameter handling
-
-## Test Architecture
-
-### Mocking Strategy
-- **HttpClient** - Mocked for all service tests
-- **RequestFactory** - Mocked for client tests  
-- **StreamFactory** - Mocked for client tests
-- **AuthProvider** - Mocked for client tests
-- **IdempotencyKeyProvider** - Mocked for client tests
-
-### Assertion Patterns
-- **Response Structure** - Validates DTO creation from API responses
-- **Request Data** - Verifies correct data serialization
-- **HTTP Methods** - Confirms correct HTTP verbs used
-- **URL Construction** - Validates endpoint URLs and query parameters
-- **Error Handling** - Tests exception scenarios (not in current tests but structure supports it)
-
-### Data Scenarios Tested
-- **Minimal Data** - Required fields only
-- **Complete Data** - All optional fields populated
-- **Edge Cases** - Empty results, long text, special characters
-- **Pagination** - First page, specific pages, empty pages
-- **Status Variations** - Active/inactive accounts, different message statuses
-
-## Benefits of This Test Suite
-
-### 1. **Complete API Coverage**
-Every public endpoint in the SMS API client is tested, ensuring full functionality verification.
-
-### 2. **Regression Protection**
-Changes to the codebase will be caught by these tests, preventing breaking changes.
-
-### 3. **Documentation**
-Tests serve as executable documentation showing how to use each service method.
-
-### 4. **Confidence in Deployments**
-High test coverage provides confidence when deploying new versions.
-
-### 5. **GDPR Compliance Testing**
-Opt-out functionality is thoroughly tested to ensure GDPR compliance features work correctly.
-
-### 6. **Multi-Environment Support**
-Tests cover different account configurations and API scenarios, ensuring the client works with both sandbox and production account modes (determined by the API response, not separate endpoints).
+As of 2.3.0 the suite has **89 tests in 16 test classes**. PHPUnit counts
+assertions differently from one version to the next: 501 on PHPUnit 12.5, 443 on
+PHPUnit 9.6.
 
 ## Running the Tests
 
 ```bash
-# Run all unit tests
-./vendor/bin/phpunit tests/Unit/ --no-coverage
+# All unit tests
+composer test
 
-# Run specific service tests
-./vendor/bin/phpunit tests/Unit/Services/ --no-coverage
+# With an HTML coverage report in coverage/ (needs Xdebug or PCOV)
+composer test-coverage
 
-# Run with coverage report
-./vendor/bin/phpunit tests/Unit/ --coverage-html coverage/
+# Code style, static analysis and tests, as CI runs them
+composer qa
 
-# Run specific test class
-./vendor/bin/phpunit tests/Unit/Services/MessageServiceTest.php
+# One test class, or the tests whose names match a pattern
+vendor/bin/phpunit tests/Unit/Services/MessageServiceTest.php
+vendor/bin/phpunit --filter DailyLimit
 ```
 
-## Test Maintenance
+On PHPUnit 12, `composer test` ends with "OK, but there were issues!" and 6
+PHPUnit notices: `HttpClientTest` creates mock objects it sets no expectations on.
+The notices are advisory and do not fail the run.
 
-### Adding New Endpoints
-When new endpoints are added to the API:
+## Supported Versions
 
-1. Add the method to the appropriate service class
-2. Create corresponding test methods in the service test class
-3. Follow the existing pattern of mocking HttpClient responses
-4. Test both success and edge cases
+CI runs the suite on PHP 7.4, 8.0, 8.1, 8.2, 8.3, 8.4 and 8.5, with the highest
+dependencies on every version and the lowest on 7.4, 8.0 and 8.1. Depending on the
+PHP version, Composer installs PHPUnit 9.6, 10.5, 11.5 or 12, so every test must
+run on all of them:
 
-### Updating Existing Endpoints
-When endpoints change:
+- PHP 7.4 syntax only: no named arguments, `match`, nullsafe operator,
+  constructor promotion or union types.
+- No PHPUnit attributes and no docblock annotations such as `@dataProvider`:
+  PHPUnit 9.6 does not read attributes and PHPUnit 12 no longer reads
+  annotations. Write one test method per case instead.
 
-1. Update the service method implementation
-2. Update the corresponding test cases
-3. Add new test cases for new parameters or behaviors
-4. Ensure backward compatibility tests pass
+## Test Classes
 
-### Performance Considerations
-- Tests run quickly (< 100ms total) due to mocking
-- No actual HTTP requests are made
-- Tests can run in parallel
-- Memory usage is minimal
+### Services (`tests/Unit/Services`)
 
-This comprehensive test suite ensures the reliability and correctness of all SMS API endpoints while providing a solid foundation for future development and maintenance.
+| Test class | Tests | Covers |
+|---|---|---|
+| `MessageServiceTest` | 9 | `create()` with a validity, callback URL and sender, with the minimal request, for a scheduled message and with `shortenUrls`, and the `ResponseMeta` it reads from the answer's headers; `get()`; `list()` on the first and on a later page; `delete()` |
+| `VerificationServiceTest` | 5 | `list()`; `create()` and the daily limit headers of its answer; `get()`; `validate()` |
+| `OptOutServiceTest` | 10 | `create()` with and without a reason, and with a long one; `get()`; `list()` on the first page, on a later page and with no result; `update()` with and without a reason; `delete()` |
+| `AccountServiceTest` | 7 | `get()` for a typical account, a minimal one, one with low credit, an inactive one and one with every contact field filled, and with and without a daily sending limit |
+
+Each test mocks `Calisero\Sms\Http\HttpClient`, expects the call the service
+should make (method, path, payload and, for creates, the idempotency flag) and
+returns the API's JSON body, decoded. To test what a service reads from the
+answer's headers, stub `getLastResponse()` with a real
+`Calisero\Sms\Http\Response`.
+
+### HTTP Layer (`tests/Unit/Http`)
+
+| Test class | Tests | Covers |
+|---|---|---|
+| `HttpClientTest` | 6 | Building GET and POST requests (URL, headers, JSON body) with a mocked transport, request factory and auth provider, and keeping their response; mapping 400, 401, 404 and 422 answers to exceptions |
+| `HttpClientResponseHandlingTest` | 12 | Real `Request` and `Response` objects through a stub transport, answered as the API answers: the error message and the trace ID (from the header in any spelling, from the error body, from an older `X-Request-ID` header); an error body that is not JSON; 422s with and without field errors; the request rate limit's 429 against the daily sending limit's; `getLastResponse()` after a success, an error and a transport failure; the version in the `User-Agent` header |
+| `ResponseTest` | 3 | Header lookup that ignores the case of names, which cURL reports in mixed case over HTTP/1.1 and in lowercase over HTTP/2 |
+
+`BaseHttpClient`, the cURL transport, has no unit tests, since nothing in the suite
+makes a real request. Check changes to it by hand, for instance against a local
+`php -S` server.
+
+### DTOs (`tests/Unit/Dto`)
+
+| Test class | Tests | Covers |
+|---|---|---|
+| `CreateMessageRequestTest` | 6 | Getters and `toArray()` for a minimal and a full request, and `shorten_urls`, sent only when set (`false` included) |
+| `MessageTest` | 4 | `fromArray()` with every field, without the optional ones, with shortened URLs and with an empty list of them |
+| `ShortenedLinkTest` | 2 | `fromArray()` for a clicked link and for one never clicked |
+| `ResponseMetaTest` | 5 | Reading the trace ID, rate limit and daily limit headers; names in any case; an account without a daily limit; values that are not numbers; no response at all |
+| `CreateMessageResponseTest` | 2 | `withResponseMeta()` returns a copy; `fromArray()` of both create responses keeps the one-parameter signature that subclasses override |
+| `DeliveryWebhookMessageTest` | 8 | `fromJson()` and `fromArray()` with a full payload, a minimal one, one that predates the daily limit and a price sent as a string; refusing invalid JSON, JSON that is not an object, a missing `messageId` and a missing price |
+
+### Client and Helpers
+
+| Test class | Tests | Covers |
+|---|---|---|
+| `SmsClientTest` (`tests/Unit`) | 7 | `SmsClient::create()` and its services: the same instance on every call, distinct services, independent clients; `SmsClient::VERSION` matching the latest version in CHANGELOG.md |
+| `BearerTokenAuthProviderTest` (`tests/Unit/Auth`) | 1 | The provider returns the token it was given |
+| `UuidIdempotencyKeyProviderTest` (`tests/Unit/IdempotencyKey`) | 2 | Keys are UUIDs and differ from one call to the next |
+
+## Writing Tests
+
+- Build fixtures from what the API really sends: the examples of the Calisero API
+  documentation and the field names the DTOs in `src/Dto` read.
+- Use `createMock()` when the test sets expectations, and a stub (`createStub()`
+  or an anonymous class) when it only needs canned answers: PHPUnit 12 reports a
+  notice for each mock that gets no expectations.
+- Cover the error paths as well as the successful ones: each exception and the
+  headers and body fields it reads.
+- Run `composer qa` before opening a pull request.

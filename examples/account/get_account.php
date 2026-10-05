@@ -55,6 +55,11 @@ try {
     echo '  🧪 Sandbox Mode: ' . ($account->isSandbox() ? 'Yes' : 'No') . "\n";
     echo "  ⏰ Created: {$account->getCreatedAt()}\n\n";
 
+    echo "📆 Daily Sending Limit:\n";
+    echo '  📊 Daily Limit: ' . ($account->getDailyLimit() ?? 'None') . "\n";
+    echo '  📥 Left Today: ' . ($account->getDailyRemaining() ?? 'Unlimited') . "\n";
+    echo "  📤 Sent Today: {$account->getSentToday()}\n\n";
+
     // Credit analysis
     $credit = $account->getCredit();
     echo "💡 Credit Analysis:\n";
@@ -79,8 +84,8 @@ try {
     echo "❌ Authentication error: {$e->getMessage()}\n";
     echo "💡 Please check your bearer token and ensure it's valid\n";
 
-    if ($e->getRequestId()) {
-        echo "🆔 Request ID: {$e->getRequestId()}\n";
+    if ($e->getTraceId()) {
+        echo "🆔 Trace ID: {$e->getTraceId()}\n";
     }
 } catch (NotFoundException $e) {
     echo "❌ Account not found: {$e->getMessage()}\n";
@@ -92,8 +97,8 @@ try {
         echo "🔢 Status Code: {$e->getStatusCode()}\n";
     }
 
-    if ($e->getRequestId()) {
-        echo "🆔 Request ID: {$e->getRequestId()}\n";
+    if ($e->getTraceId()) {
+        echo "🆔 Trace ID: {$e->getTraceId()}\n";
     }
 
     // Provide specific guidance based on status code

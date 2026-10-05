@@ -21,6 +21,12 @@ class Message
     private string $status;
     private ?string $sender;
 
+    /** @var ShortenedLink[] */
+    private array $shortenedUrls;
+
+    /**
+     * @param ShortenedLink[] $shortenedUrls
+     */
     public function __construct(
         string $id,
         string $recipient,
@@ -32,7 +38,8 @@ class Message
         ?string $deliveredAt,
         ?string $callbackUrl,
         string $status,
-        ?string $sender
+        ?string $sender,
+        array $shortenedUrls = []
     ) {
         $this->id = $id;
         $this->recipient = $recipient;
@@ -45,6 +52,7 @@ class Message
         $this->callbackUrl = $callbackUrl;
         $this->status = $status;
         $this->sender = $sender;
+        $this->shortenedUrls = $shortenedUrls;
     }
 
     /**
@@ -61,6 +69,18 @@ class Message
         \assert(\is_string($data['created_at']));
         \assert(\is_string($data['status']));
 
+        $shortenedUrls = [];
+        if (isset($data['shortened_urls']) && \is_array($data['shortened_urls'])) {
+            $shortenedUrls = \array_map(
+                static function ($linkData): ShortenedLink {
+                    \assert(\is_array($linkData));
+
+                    return ShortenedLink::fromArray($linkData);
+                },
+                \array_values($data['shortened_urls'])
+            );
+        }
+
         return new self(
             $data['id'],
             $data['recipient'],
@@ -72,7 +92,8 @@ class Message
             isset($data['delivered_at']) && \is_string($data['delivered_at']) ? $data['delivered_at'] : null,
             isset($data['callback_url']) && \is_string($data['callback_url']) ? $data['callback_url'] : null,
             $data['status'],
-            isset($data['sender']) && \is_string($data['sender']) ? $data['sender'] : null
+            isset($data['sender']) && \is_string($data['sender']) ? $data['sender'] : null,
+            $shortenedUrls
         );
     }
 
@@ -129,5 +150,16 @@ class Message
     public function getSender(): ?string
     {
         return $this->sender;
+    }
+
+    /**
+     * The links of the body Calisero shortened (requested with `shorten_urls`),
+     * with their click statistics; empty when none were.
+     *
+     * @return ShortenedLink[]
+     */
+    public function getShortenedUrls(): array
+    {
+        return $this->shortenedUrls;
     }
 }

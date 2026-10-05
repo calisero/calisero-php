@@ -11,6 +11,7 @@ use Calisero\Sms\Dto\PaginatedVerifications;
 use Calisero\Sms\Dto\Verification;
 use Calisero\Sms\Dto\VerificationCheckRequest;
 use Calisero\Sms\Http\HttpClient;
+use Calisero\Sms\Http\Response;
 use Calisero\Sms\Services\VerificationService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -110,6 +111,44 @@ class VerificationServiceTest extends TestCase
         $this->assertInstanceOf(CreateVerificationResponse::class, $resp);
         $verification = $resp->getData();
         $this->assertSame('unverified', $verification->getStatus());
+    }
+
+    public function testCreateVerificationReadsTheDailyLimitHeaders(): void
+    {
+        $request = new CreateVerificationRequest('+40742**350', 'Calisero');
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('post')
+            ->willReturn([
+                'data' => [
+                    'id' => '019a62f1-66b7-7387-a64f-2742c12a2860',
+                    'phone' => '+40742**350',
+                    'brand' => 'Calisero',
+                    'status' => 'unverified',
+                    'template' => null,
+                    'created_at' => '2025-11-08T10:09:38.000000Z',
+                    'expires_at' => '2025-11-08T10:12:38.000000Z',
+                    'verified_at' => null,
+                    'attempts' => 0,
+                    'expired' => false,
+                ],
+            ]);
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('getLastResponse')
+            ->willReturn(new Response(201, [
+                'X-Trace-Id' => ['9b80eef1-49d4-4502-85a8-febb68cc11a7'],
+                'X-Daily-Limit' => ['1000'],
+                'X-Daily-Remaining' => ['999'],
+            ], ''));
+
+        $meta = $this->service->create($request)->getResponseMeta();
+
+        $this->assertSame('9b80eef1-49d4-4502-85a8-febb68cc11a7', $meta->getTraceId());
+        $this->assertSame(1000, $meta->getDailyLimit());
+        $this->assertSame(999, $meta->getDailyRemaining());
     }
 
     public function testGetVerification(): void

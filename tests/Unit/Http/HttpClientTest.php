@@ -87,14 +87,10 @@ class HttpClientTest extends TestCase
             ->method('getBody')
             ->willReturn(\json_encode($responseData));
 
-        $response->expects($this->once())
-            ->method('getHeaderLine')
-            ->with('X-Request-ID')
-            ->willReturn('');
-
         $result = $this->client->get('/test');
 
         $this->assertEquals($responseData, $result);
+        $this->assertSame($response, $this->client->getLastResponse());
     }
 
     public function testPostRequest(): void
@@ -139,14 +135,10 @@ class HttpClientTest extends TestCase
             ->method('getBody')
             ->willReturn(\json_encode($responseData));
 
-        $response->expects($this->once())
-            ->method('getHeaderLine')
-            ->with('X-Request-ID')
-            ->willReturn('');
-
         $result = $this->client->post('/test', $requestData);
 
         $this->assertEquals($responseData, $result);
+        $this->assertSame($response, $this->client->getLastResponse());
     }
 
     public function testValidationException(): void

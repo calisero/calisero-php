@@ -77,12 +77,39 @@ try {
         echo "  🔴 Capacity: Very limited - top-up required\n";
     }
 
+    // Daily sending limit: how many messages the account can still send today
+    echo "\n📆 Daily Sending Limit:\n";
+    $dailyLimit = $account->getDailyLimit();
+    $dailyRemaining = $account->getDailyRemaining();
+
+    if ($dailyLimit === null) {
+        echo "  ✅ No daily limit applies to this account\n";
+    } else {
+        echo "  📊 Limit: {$dailyLimit} messages a day (resets at midnight, Romania time)\n";
+        echo "  📤 Sent today: {$account->getSentToday()}\n";
+        echo "  📥 Left today: {$dailyRemaining}\n";
+
+        if ($dailyRemaining === 0) {
+            echo "  🔴 The limit is reached: new messages are refused until midnight\n";
+        } elseif ($dailyRemaining !== null && $dailyRemaining < $dailyLimit * 0.2) {
+            echo "  🟠 Less than 20% of the limit is left for today\n";
+        }
+
+        if ($dailyRemaining !== null && $dailyRemaining < $estimatedMessages) {
+            echo "  💡 The daily limit, not the credit, caps what you can send today\n";
+        }
+    }
+
     // Service readiness check
     echo "\n🔍 Service Readiness Check:\n";
     $issues = [];
 
     if ($credit <= 0) {
         $issues[] = 'Insufficient credit balance';
+    }
+
+    if ($dailyRemaining === 0) {
+        $issues[] = 'Daily sending limit reached until midnight, Romania time';
     }
 
     if ($account->getStatus() !== 'active') {
@@ -104,6 +131,7 @@ try {
     echo "\n📊 Quick Dashboard:\n";
     echo "  {$statusIcon} Balance: {$credit}\n";
     echo "  📱 Est. Messages: ~{$estimatedMessages}\n";
+    echo '  📆 Left today: ' . ($dailyRemaining ?? 'no daily limit') . "\n";
     echo "  🏷️ Account: {$account->getStatus()}\n";
     echo '  🌍 Environment: ' . ($account->isSandbox() ? 'Sandbox' : 'Production') . "\n";
 } catch (UnauthorizedException $e) {
@@ -119,7 +147,7 @@ try {
         echo "🔢 Status Code: {$e->getStatusCode()}\n";
     }
 
-    if ($e->getRequestId()) {
-        echo "🆔 Request ID: {$e->getRequestId()}\n";
+    if ($e->getTraceId()) {
+        echo "🆔 Trace ID: {$e->getTraceId()}\n";
     }
 }

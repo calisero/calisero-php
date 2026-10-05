@@ -19,6 +19,8 @@ interface ResponseInterface
     public function getBody(): string;
 
     /**
+     * The values of a header, its name matched case-insensitively.
+     *
      * @return string[]
      */
     public function getHeader(string $name): array;

@@ -53,7 +53,9 @@ composer test -- --coverage-html coverage
 1. Ensure all QA checks pass (`composer qa`)
 2. Update the README.md if needed
 3. Update CHANGELOG.md following [Keep a Changelog](https://keepachangelog.com/) format
-4. Create a Pull Request with:
+4. For a release, set `SmsClient::VERSION` (sent in the `User-Agent` header) to
+   the new version: a test checks it matches the latest version in CHANGELOG.md
+5. Create a Pull Request with:
    - Clear title and description
    - Reference to any related issues
    - Screenshots/examples if applicable

@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Exceptions\ApiException;
+use Calisero\Sms\Exceptions\DailyLimitExceededException;
 use Calisero\Sms\Exceptions\ValidationException;
 use Calisero\Sms\SmsClient;
 
@@ -64,7 +65,14 @@ try {
 
             echo "✅ Success\n";
             echo "  📨 Message ID: {$message->getId()}\n";
-            echo "  📊 Status: {$message->getStatus()}\n\n";
+            echo "  📊 Status: {$message->getStatus()}\n";
+
+            // What is left of the account's daily sending limit (null when it has none)
+            $dailyRemaining = $response->getResponseMeta()->getDailyRemaining();
+            if ($dailyRemaining !== null) {
+                echo "  📉 Daily limit: {$dailyRemaining} messages left today\n";
+            }
+            echo "\n";
 
             $results[] = [
                 'recipient' => $recipient,
@@ -75,10 +83,31 @@ try {
 
             ++$successCount;
 
+            // Every further message would be refused until midnight, Romania time
+            if ($dailyRemaining === 0) {
+                echo "⛔ Daily sending limit used up: the remaining recipients are skipped\n\n";
+
+                break;
+            }
+
             // Add a small delay to avoid rate limiting
             if ($index < count($recipients) - 1) {
                 usleep(200000); // 200ms delay
             }
+        } catch (DailyLimitExceededException $e) {
+            // Nothing was sent or billed, and every further message would be refused too
+            echo "❌ Daily sending limit reached\n";
+            echo "  💬 Error: {$e->getMessage()}\n\n";
+
+            $results[] = [
+                'recipient' => $recipient,
+                'status' => 'daily_limit_exceeded',
+                'error' => $e->getMessage(),
+            ];
+
+            ++$failureCount;
+
+            break;
         } catch (ValidationException $e) {
             echo "❌ Validation error\n";
             echo "  💬 Error: {$e->getMessage()}\n\n";
@@ -110,6 +139,7 @@ try {
     echo "=== Bulk SMS Summary ===\n";
     echo "✅ Successful: {$successCount}\n";
     echo "❌ Failed: {$failureCount}\n";
+    echo '⏭️ Skipped: ' . (count($recipients) - $successCount - $failureCount) . "\n";
     echo '📊 Total: ' . count($recipients) . "\n";
     echo '📈 Success Rate: ' . round(($successCount / count($recipients)) * 100, 2) . "%\n\n";
 
@@ -135,8 +165,8 @@ try {
         echo "🔢 Status Code: {$e->getStatusCode()}\n";
     }
 
-    if ($e->getRequestId()) {
-        echo "🆔 Request ID: {$e->getRequestId()}\n";
+    if ($e->getTraceId()) {
+        echo "🆔 Trace ID: {$e->getTraceId()}\n";
     }
 
     echo "\n💡 Bulk operation stopped due to critical error\n";

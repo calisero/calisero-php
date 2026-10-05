@@ -23,6 +23,7 @@ class CreateMessageRequestTest extends TestCase
         $this->assertNull($request->getScheduleAt());
         $this->assertNull($request->getCallbackUrl());
         $this->assertNull($request->getSender());
+        $this->assertNull($request->getShortenUrls());
     }
 
     public function testCanCreateFullRequest(): void
@@ -84,5 +85,43 @@ class CreateMessageRequestTest extends TestCase
         ];
 
         $this->assertSame($expected, $request->toArray());
+    }
+
+    public function testToArrayWithShortenUrls(): void
+    {
+        $request = new CreateMessageRequest(
+            '+40742***350',
+            'Track your order: https://example.com/orders/12345',
+            null,
+            null,
+            null,
+            null,
+            null,
+            true
+        );
+
+        $this->assertTrue($request->getShortenUrls());
+        $this->assertSame([
+            'recipient' => '+40742***350',
+            'body' => 'Track your order: https://example.com/orders/12345',
+            'shorten_urls' => true,
+        ], $request->toArray());
+    }
+
+    public function testToArrayKeepsShortenUrlsFalse(): void
+    {
+        $request = new CreateMessageRequest(
+            '+40742***350',
+            'Track your order: https://example.com/orders/12345',
+            null,
+            null,
+            null,
+            null,
+            null,
+            false
+        );
+
+        $this->assertFalse($request->getShortenUrls());
+        $this->assertFalse($request->toArray()['shorten_urls']);
     }
 }

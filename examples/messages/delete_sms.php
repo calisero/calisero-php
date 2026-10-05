@@ -72,8 +72,8 @@ try {
         echo "🔢 Status Code: {$e->getStatusCode()}\n";
     }
 
-    if ($e->getRequestId()) {
-        echo "🆔 Request ID: {$e->getRequestId()}\n";
+    if ($e->getTraceId()) {
+        echo "🆔 Trace ID: {$e->getTraceId()}\n";
     }
 
     // Provide specific guidance
