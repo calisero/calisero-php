@@ -8,8 +8,8 @@ This directory contains comprehensive examples for using the Calisero SMS API PH
 examples/
 ├── messages/               # SMS message operations
 │   ├── send_simple_sms.php        # Send a basic SMS message
-│   ├── send_advanced_sms.php      # Send SMS with all options (scheduling, callbacks, etc.)
-│   ├── send_bulk_sms.php          # Send messages to multiple recipients
+│   ├── send_advanced_sms.php      # Send SMS with all options (scheduling, callbacks, URL shortening, etc.)
+│   ├── send_bulk_sms.php          # Send messages to multiple recipients, within the daily limit
 │   ├── get_sms.php                # Retrieve message details
 │   ├── list_sms.php               # List messages with pagination
 │   └── delete_sms.php             # Delete/cancel scheduled messages
@@ -26,7 +26,9 @@ examples/
 │   └── validate_verification.php  # Validate an OTP code
 ├── account/                # Account information
 │   ├── get_account.php            # Get account details
-│   └── check_balance.php          # Check account balance and status
+│   └── check_balance.php          # Check account balance, daily limit and status
+├── webhooks/               # Callbacks Calisero sends to your application
+│   └── delivery_webhook.php       # Receive delivery status callbacks
 └── error_handling_complete.php    # Comprehensive error handling examples
 ```
 
@@ -67,7 +69,8 @@ Each example includes proper error handling for common scenarios:
 - **Authentication errors** (401) - Invalid or expired tokens
 - **Validation errors** (422) - Invalid request data
 - **Not found errors** (404) - Non-existent resources
-- **Rate limiting** (429) - Too many requests
+- **Daily sending limit** (429) - The account sent its daily limit; nothing is sent until midnight, Romania time
+- **Rate limiting** (429) - More than 240 requests a minute
 - **Server errors** (5xx) - API server issues
 
 For comprehensive error handling patterns, see `error_handling_complete.php`.
@@ -76,12 +79,12 @@ For comprehensive error handling patterns, see `error_handling_complete.php`.
 
 ### Basic Operations
 - **send_simple_sms.php** - Send a basic text message
-- **send_advanced_sms.php** - Use scheduling, callbacks, custom sender, etc.
+- **send_advanced_sms.php** - Use scheduling, callbacks, custom sender, URL shortening, etc.
 - **get_sms.php** - Retrieve message status and details
 - **list_sms.php** - Browse message history with pagination
 
 ### Advanced Operations
-- **send_bulk_sms.php** - Send to multiple recipients with rate limiting
+- **send_bulk_sms.php** - Send to multiple recipients with rate limiting, stopping at the daily sending limit
 - **delete_sms.php** - Cancel scheduled messages
 
 ## OptOut Examples
@@ -104,12 +107,16 @@ For comprehensive error handling patterns, see `error_handling_complete.php`.
 
 ### Account Management
 - **get_account.php** - View account details and contact information
-- **check_balance.php** - Monitor credit balance and estimate message capacity
+- **check_balance.php** - Monitor credit balance and daily sending limit, and estimate message capacity
+
+## Webhook Examples
+
+- **delivery_webhook.php** - Receive and validate the delivery status callbacks sent to a message's callback URL; run it with `php -S localhost:8080 examples/webhooks/delivery_webhook.php`
 
 ## Best Practices Demonstrated
 
 1. **Proper Error Handling** - All examples catch and handle specific exceptions
-2. **Request ID Logging** - Store request IDs for support inquiries
+2. **Trace ID Logging** - Store trace IDs for support inquiries and the dashboard's Developers → Debug page
 3. **Rate Limiting** - Implement delays for bulk operations
 4. **Input Validation** - Validate data before API calls
 5. **Secure Logging** - Use visible body parameter for sensitive content
@@ -133,9 +140,9 @@ If you encounter issues with these examples:
 
 1. Check your authentication credentials
 2. Verify phone number formats
-3. Review the error messages and request IDs
+3. Review the error messages and trace IDs
 4. Consult the API documentation
-5. Contact support with request IDs if needed
+5. Contact support with trace IDs if needed
 
 ## Contributing
 

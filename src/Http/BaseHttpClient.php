@@ -81,7 +81,11 @@ class BaseHttpClient implements HttpClientInterface
 
             return new Response($statusCode, $this->parseHeaders($headerData), $body);
         } finally {
-            \curl_close($curl);
+            // Since PHP 8.0 the handle is freed with its last reference and curl_close()
+            // does nothing; PHP 8.5 deprecates it.
+            if (\PHP_VERSION_ID < 80000) {
+                \curl_close($curl);
+            }
         }
     }
 

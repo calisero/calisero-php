@@ -12,6 +12,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Exceptions\ApiException;
+use Calisero\Sms\Exceptions\DailyLimitExceededException;
 use Calisero\Sms\Exceptions\ForbiddenException;
 use Calisero\Sms\Exceptions\NotFoundException;
 use Calisero\Sms\Exceptions\RateLimitedException;
@@ -36,7 +37,7 @@ try {
     echo "✅ Caught UnauthorizedException (expected):\n";
     echo "   💬 Message: {$e->getMessage()}\n";
     echo "   🔢 Status Code: {$e->getStatusCode()}\n";
-    echo '   🆔 Request ID: ' . ($e->getRequestId() ?? 'N/A') . "\n";
+    echo '   🆔 Trace ID: ' . ($e->getTraceId() ?? 'N/A') . "\n";
     echo "   💡 Solution: Check your bearer token and ensure it's valid\n\n";
 } catch (ApiException $e) {
     echo "✅ Caught general ApiException:\n";
@@ -55,7 +56,7 @@ try {
     echo "✅ Caught ValidationException (expected):\n";
     echo "   💬 Message: {$e->getMessage()}\n";
     echo "   🔢 Status Code: {$e->getStatusCode()}\n";
-    echo '   🆔 Request ID: ' . ($e->getRequestId() ?? 'N/A') . "\n";
+    echo '   🆔 Trace ID: ' . ($e->getTraceId() ?? 'N/A') . "\n";
 
     if ($e->getValidationErrors()) {
         echo "   📝 Validation Details:\n";
@@ -80,7 +81,7 @@ try {
     echo "✅ Caught NotFoundException (expected):\n";
     echo "   💬 Message: {$e->getMessage()}\n";
     echo "   🔢 Status Code: {$e->getStatusCode()}\n";
-    echo '   🆔 Request ID: ' . ($e->getRequestId() ?? 'N/A') . "\n";
+    echo '   🆔 Trace ID: ' . ($e->getTraceId() ?? 'N/A') . "\n";
     echo "   💡 Solution: Verify the resource ID exists\n\n";
 } catch (ApiException $e) {
     echo "✅ Caught general ApiException:\n";
@@ -99,7 +100,7 @@ try {
     echo "✅ Caught ForbiddenException (might occur):\n";
     echo "   💬 Message: {$e->getMessage()}\n";
     echo "   🔢 Status Code: {$e->getStatusCode()}\n";
-    echo '   🆔 Request ID: ' . ($e->getRequestId() ?? 'N/A') . "\n";
+    echo '   🆔 Trace ID: ' . ($e->getTraceId() ?? 'N/A') . "\n";
     echo "   💡 Solution: Check your account permissions or operation restrictions\n\n";
 } catch (NotFoundException $e) {
     echo "✅ Caught NotFoundException (expected for non-existent message):\n";
@@ -111,24 +112,34 @@ try {
 }
 
 // 5. Rate Limiting Errors (429)
+// A 429 has two causes: the request rate limit (240 requests a minute per API user)
+// and the account's daily sending limit. Catch DailyLimitExceededException first:
+// it extends RateLimitedException.
 echo "5️⃣ Testing Rate Limiting (429) - Simulation...\n";
 
 try {
     // This is a simulation - actual rate limiting would require many requests
     throw new RateLimitedException(
-        'Rate limit exceeded. Try again later.',
+        'Too Many Attempts.',
         0, // exception code
         null, // previous exception
         429, // status code
-        'req_123456789', // request ID
+        '9b80eef1-49d4-4502-85a8-febb68cc11a7', // trace ID
         [], // error details
-        60 // retry after seconds
+        17, // retry after seconds
+        240, // requests allowed a minute (X-RateLimit-Limit)
+        0, // requests left this minute (X-RateLimit-Remaining)
+        time() + 17 // when requests are accepted again (X-RateLimit-Reset)
     );
+} catch (DailyLimitExceededException $e) {
+    echo "❌ Not expected here: this is the request rate limit\n\n";
 } catch (RateLimitedException $e) {
     echo "✅ Caught RateLimitedException (simulated):\n";
     echo "   💬 Message: {$e->getMessage()}\n";
     echo "   🔢 Status Code: {$e->getStatusCode()}\n";
-    echo '   🆔 Request ID: ' . ($e->getRequestId() ?? 'N/A') . "\n";
+    echo '   🆔 Trace ID: ' . ($e->getTraceId() ?? 'N/A') . "\n";
+    echo '   📊 Requests left this minute: ' . ($e->getRateLimitRemaining() ?? 'N/A')
+        . ' of ' . ($e->getRateLimitLimit() ?? 'N/A') . "\n";
 
     // Check for retry after
     $retryAfter = $e->getRetryAfter();
@@ -141,6 +152,36 @@ try {
     echo "\n";
 }
 
+echo "5️⃣b Testing the Daily Sending Limit (429) - Simulation...\n";
+
+try {
+    // This is a simulation - the API answers like this once the account sent its daily limit
+    throw new DailyLimitExceededException(
+        'This account can send at most 1,000 messages a day. The limit resets at midnight, Romania time (2026-10-01T00:00:00+03:00). Contact us to raise it.',
+        0, // exception code
+        null, // previous exception
+        429, // status code
+        '9b80eef1-49d4-4502-85a8-febb68cc11a7', // trace ID
+        ['code' => DailyLimitExceededException::ERROR_CODE], // error details
+        21600, // retry after seconds: until midnight, Romania time
+        240, // requests allowed a minute (X-RateLimit-Limit)
+        238, // requests left this minute (X-RateLimit-Remaining)
+        null, // X-RateLimit-Reset: only sent by the request rate limit
+        1000, // daily limit
+        0, // messages left today
+        '2026-10-01T00:00:00+03:00' // when the limit resets
+    );
+} catch (DailyLimitExceededException $e) {
+    echo "✅ Caught DailyLimitExceededException (simulated):\n";
+    echo "   💬 Message: {$e->getMessage()}\n";
+    echo "   🔢 Status Code: {$e->getStatusCode()}\n";
+    echo '   🆔 Trace ID: ' . ($e->getTraceId() ?? 'N/A') . "\n";
+    echo '   📊 Daily limit: ' . ($e->getDailyLimit() ?? 'N/A') . ' messages, '
+        . ($e->getDailyRemaining() ?? 'N/A') . " left today\n";
+    echo '   ⏰ Resets at: ' . ($e->getResetsAt() ?? 'N/A') . "\n";
+    echo "   💡 Solution: Nothing was sent or billed. Stop sending until the reset, or contact Calisero to raise the limit\n\n";
+}
+
 // 6. Server Errors (5xx)
 echo "6️⃣ Testing Server Errors (5xx) - Simulation...\n";
 
@@ -151,13 +192,13 @@ try {
         0, // exception code
         null, // previous exception
         500, // status code
-        'req_123456789' // request ID
+        '9b80eef1-49d4-4502-85a8-febb68cc11a7' // trace ID
     );
 } catch (ServerException $e) {
     echo "✅ Caught ServerException (simulated):\n";
     echo "   💬 Message: {$e->getMessage()}\n";
     echo "   🔢 Status Code: {$e->getStatusCode()}\n";
-    echo '   🆔 Request ID: ' . ($e->getRequestId() ?? 'N/A') . "\n";
+    echo '   🆔 Trace ID: ' . ($e->getTraceId() ?? 'N/A') . "\n";
     echo "   💡 Solution: Wait and retry, or contact support if it persists\n\n";
 }
 
@@ -184,7 +225,7 @@ function handleSmsApiError(Throwable $e): void
 
     if ($e instanceof ApiException) {
         echo '   🔢 HTTP Status: ' . ($e->getStatusCode() ?? 'N/A') . "\n";
-        echo '   🆔 Request ID: ' . ($e->getRequestId() ?? 'N/A') . "\n";
+        echo '   🆔 Trace ID: ' . ($e->getTraceId() ?? 'N/A') . "\n";
 
         // Specific handling based on error type
         switch (get_class($e)) {
@@ -213,6 +254,17 @@ function handleSmsApiError(Throwable $e): void
 
             case ForbiddenException::class:
                 echo "   🔧 Action: Check account permissions and operation restrictions\n";
+
+                break;
+
+            case DailyLimitExceededException::class:
+                echo "   🔧 Action: Stop sending until the daily limit resets, or ask Calisero to raise it\n";
+
+                /** @var DailyLimitExceededException $e */
+                $resetsAt = $e->getResetsAt();
+                if ($resetsAt) {
+                    echo "   ⏰ Resets at: {$resetsAt}\n";
+                }
 
                 break;
 
@@ -249,7 +301,7 @@ try {
         0, // exception code
         null, // previous exception
         422, // status code
-        'req_example', // request ID
+        '9b80eef1-49d4-4502-85a8-febb68cc11a7', // trace ID
         [], // error details
         ['recipient' => ['The recipient field is required.']] // validation errors
     );
@@ -260,7 +312,7 @@ try {
 echo "\n✨ Error handling examples completed!\n";
 echo "\n💡 Best Practices:\n";
 echo "  1. Always catch specific exception types first, then general ones\n";
-echo "  2. Log request IDs for support inquiries\n";
+echo "  2. Log trace IDs for support inquiries (Developers → Debug in the dashboard)\n";
 echo "  3. Implement retry logic for rate limits and server errors\n";
 echo "  4. Validate input data before making API calls\n";
 echo "  5. Handle network timeouts gracefully\n";

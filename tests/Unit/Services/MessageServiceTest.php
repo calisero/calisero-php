@@ -12,6 +12,7 @@ use Calisero\Sms\Dto\PaginatedMessages;
 use Calisero\Sms\Dto\PaginationLinks;
 use Calisero\Sms\Dto\PaginationMeta;
 use Calisero\Sms\Http\HttpClient;
+use Calisero\Sms\Http\Response;
 use Calisero\Sms\Services\MessageService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -306,6 +307,106 @@ class MessageServiceTest extends TestCase
         $this->assertSame('msg_simple', $message->getId());
         $this->assertSame('Simple test message', $message->getBody());
         $this->assertNull($message->getSender());
+
+        // Without an answer to read, the response meta is empty.
+        $this->assertNull($response->getResponseMeta()->getTraceId());
+        $this->assertNull($response->getResponseMeta()->getDailyRemaining());
+    }
+
+    public function testCreateMessageWithShortenedUrls(): void
+    {
+        $request = new CreateMessageRequest(
+            '+40742123456',
+            'Track your order: https://example.com/orders/12345',
+            null,
+            null,
+            null,
+            null,
+            null,
+            true
+        );
+
+        $expectedRequestData = [
+            'recipient' => '+40742123456',
+            'body' => 'Track your order: https://example.com/orders/12345',
+            'shorten_urls' => true,
+        ];
+
+        $responseData = [
+            'data' => [
+                'id' => 'msg_shortened',
+                'recipient' => '+40742123456',
+                'body' => 'Track your order: https://calisero.ro/s/ghJKPV',
+                'parts' => 1,
+                'created_at' => '2025-12-02T15:43:02.000000Z',
+                'scheduled_at' => null,
+                'sent_at' => null,
+                'delivered_at' => null,
+                'callback_url' => null,
+                'status' => 'scheduled',
+                'sender' => null,
+                'shortened_urls' => [
+                    [
+                        'id' => '019adfbb-40a1-71ee-bcb5-8d551b8cfdae',
+                        'original_link' => 'https://example.com/orders/12345',
+                        'shortened_link' => 'https://calisero.ro/s/ghJKPV',
+                        'click_count' => 0,
+                        'last_click' => null,
+                        'created_at' => '2025-12-02T15:43:02.000000Z',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('post')
+            ->with('/messages', $expectedRequestData, true)
+            ->willReturn($responseData);
+
+        $links = $this->messageService->create($request)->getData()->getShortenedUrls();
+
+        $this->assertCount(1, $links);
+        $this->assertSame('https://example.com/orders/12345', $links[0]->getOriginalLink());
+        $this->assertSame('https://calisero.ro/s/ghJKPV', $links[0]->getShortenedLink());
+    }
+
+    public function testCreateMessageReadsTheResponseHeaders(): void
+    {
+        $request = new CreateMessageRequest('+40742123456', 'Simple test message');
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('post')
+            ->willReturn([
+                'data' => [
+                    'id' => 'msg_simple',
+                    'recipient' => '+40742123456',
+                    'body' => 'Simple test message',
+                    'parts' => 1,
+                    'created_at' => '2024-01-01T12:00:00Z',
+                    'status' => 'scheduled',
+                ],
+            ]);
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('getLastResponse')
+            ->willReturn(new Response(201, [
+                'X-Trace-Id' => ['9b80eef1-49d4-4502-85a8-febb68cc11a7'],
+                'X-RateLimit-Limit' => ['240'],
+                'X-RateLimit-Remaining' => ['239'],
+                'X-Daily-Limit' => ['1000'],
+                'X-Daily-Remaining' => ['873'],
+            ], ''));
+
+        $meta = $this->messageService->create($request)->getResponseMeta();
+
+        $this->assertSame('9b80eef1-49d4-4502-85a8-febb68cc11a7', $meta->getTraceId());
+        $this->assertSame(240, $meta->getRateLimitLimit());
+        $this->assertSame(239, $meta->getRateLimitRemaining());
+        $this->assertSame(1000, $meta->getDailyLimit());
+        $this->assertSame(873, $meta->getDailyRemaining());
     }
 
     public function testCreateScheduledMessage(): void

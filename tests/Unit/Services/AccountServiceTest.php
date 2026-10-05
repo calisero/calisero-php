@@ -156,6 +156,89 @@ class AccountServiceTest extends TestCase
         $this->assertSame(0.0, $account->getCredit());
         $this->assertSame('pending', $account->getStatus());
         $this->assertTrue($account->isSandbox());
+        $this->assertNull($account->getDailyLimit());
+        $this->assertNull($account->getDailyRemaining());
+        $this->assertSame(0, $account->getSentToday());
+    }
+
+    public function testGetAccountWithDailyLimit(): void
+    {
+        $accountId = 'acc_daily_limit';
+
+        $responseData = [
+            'data' => [
+                'id' => 'acc_daily_limit',
+                'code' => 'ACME001',
+                'name' => 'ACME Corporation',
+                'description' => null,
+                'fiscal_code' => null,
+                'registry_number' => null,
+                'iban' => null,
+                'city' => 'Bucharest',
+                'state' => 'Bucharest',
+                'country' => 'Romania',
+                'address' => '123 Main Street',
+                'postal_code' => null,
+                'email' => null,
+                'phone' => null,
+                'contact_person' => null,
+                'credit' => 100.5,
+                'status' => 'active',
+                'sandbox' => false,
+                'daily_limit' => 1000,
+                'daily_remaining' => 873,
+                'sent_today' => 127,
+                'created_at' => '2024-01-01T10:00:00Z',
+            ],
+        ];
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('get')
+            ->with("/accounts/{$accountId}")
+            ->willReturn($responseData);
+
+        $account = $this->accountService->get($accountId)->getData();
+
+        $this->assertSame(1000, $account->getDailyLimit());
+        $this->assertSame(873, $account->getDailyRemaining());
+        $this->assertSame(127, $account->getSentToday());
+    }
+
+    public function testGetAccountWithoutDailyLimit(): void
+    {
+        $accountId = 'acc_no_daily_limit';
+
+        $responseData = [
+            'data' => [
+                'id' => 'acc_no_daily_limit',
+                'code' => 'ACME002',
+                'name' => 'ACME Unlimited',
+                'city' => 'Bucharest',
+                'state' => 'Bucharest',
+                'country' => 'Romania',
+                'address' => '123 Main Street',
+                'credit' => 2500.0,
+                'status' => 'active',
+                'sandbox' => false,
+                'daily_limit' => null,
+                'daily_remaining' => null,
+                'sent_today' => 4210,
+                'created_at' => '2024-01-01T10:00:00Z',
+            ],
+        ];
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('get')
+            ->with("/accounts/{$accountId}")
+            ->willReturn($responseData);
+
+        $account = $this->accountService->get($accountId)->getData();
+
+        $this->assertNull($account->getDailyLimit());
+        $this->assertNull($account->getDailyRemaining());
+        $this->assertSame(4210, $account->getSentToday());
     }
 
     public function testGetAccountWithLowCredit(): void

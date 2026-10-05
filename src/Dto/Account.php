@@ -27,6 +27,9 @@ class Account
     private float $credit;
     private string $status;
     private bool $sandbox;
+    private ?int $dailyLimit;
+    private ?int $dailyRemaining;
+    private int $sentToday;
     private string $createdAt;
 
     public function __construct(
@@ -48,7 +51,10 @@ class Account
         float $credit,
         string $status,
         bool $sandbox,
-        string $createdAt
+        string $createdAt,
+        ?int $dailyLimit = null,
+        ?int $dailyRemaining = null,
+        int $sentToday = 0
     ) {
         $this->id = $id;
         $this->code = $code;
@@ -69,6 +75,9 @@ class Account
         $this->status = $status;
         $this->sandbox = $sandbox;
         $this->createdAt = $createdAt;
+        $this->dailyLimit = $dailyLimit;
+        $this->dailyRemaining = $dailyRemaining;
+        $this->sentToday = $sentToday;
     }
 
     /**
@@ -109,7 +118,10 @@ class Account
             (float) $data['credit'],
             $data['status'],
             $data['sandbox'],
-            $data['created_at']
+            $data['created_at'],
+            isset($data['daily_limit']) && \is_int($data['daily_limit']) ? $data['daily_limit'] : null,
+            isset($data['daily_remaining']) && \is_int($data['daily_remaining']) ? $data['daily_remaining'] : null,
+            isset($data['sent_today']) && \is_int($data['sent_today']) ? $data['sent_today'] : 0
         );
     }
 
@@ -201,6 +213,33 @@ class Account
     public function isSandbox(): bool
     {
         return $this->sandbox;
+    }
+
+    /**
+     * How many messages the account can send in a day, midnight to midnight,
+     * Romania time; null when no daily limit applies.
+     */
+    public function getDailyLimit(): ?int
+    {
+        return $this->dailyLimit;
+    }
+
+    /**
+     * How many messages the account can still send today; null when no daily
+     * limit applies.
+     */
+    public function getDailyRemaining(): ?int
+    {
+        return $this->dailyRemaining;
+    }
+
+    /**
+     * The real messages the account created today, Romania time: OTP codes
+     * included, test messages left out, one per message whatever its parts.
+     */
+    public function getSentToday(): int
+    {
+        return $this->sentToday;
     }
 
     public function getCreatedAt(): string

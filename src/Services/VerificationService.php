@@ -8,6 +8,7 @@ use Calisero\Sms\Dto\CreateVerificationRequest;
 use Calisero\Sms\Dto\CreateVerificationResponse;
 use Calisero\Sms\Dto\GetVerificationResponse;
 use Calisero\Sms\Dto\PaginatedVerifications;
+use Calisero\Sms\Dto\ResponseMeta;
 use Calisero\Sms\Dto\VerificationCheckRequest;
 use Calisero\Sms\Http\HttpClient;
 
@@ -48,7 +49,8 @@ class VerificationService
     {
         $response = $this->httpClient->post('/verifications', $request->toArray(), true);
 
-        return CreateVerificationResponse::fromArray($response);
+        return CreateVerificationResponse::fromArray($response)
+            ->withResponseMeta(ResponseMeta::fromResponse($this->httpClient->getLastResponse()));
     }
 
     /**

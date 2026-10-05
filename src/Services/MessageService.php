@@ -8,6 +8,7 @@ use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Dto\CreateMessageResponse;
 use Calisero\Sms\Dto\GetMessageResponse;
 use Calisero\Sms\Dto\PaginatedMessages;
+use Calisero\Sms\Dto\ResponseMeta;
 use Calisero\Sms\Http\HttpClient;
 
 /**
@@ -29,7 +30,8 @@ class MessageService
     {
         $response = $this->httpClient->post('/messages', $request->toArray(), true);
 
-        return CreateMessageResponse::fromArray($response);
+        return CreateMessageResponse::fromArray($response)
+            ->withResponseMeta(ResponseMeta::fromResponse($this->httpClient->getLastResponse()));
     }
 
     /**

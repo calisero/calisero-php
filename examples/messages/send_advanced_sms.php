@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Calisero\Sms\Dto\CreateMessageRequest;
 use Calisero\Sms\Exceptions\ApiException;
+use Calisero\Sms\Exceptions\DailyLimitExceededException;
 use Calisero\Sms\Exceptions\ValidationException;
 use Calisero\Sms\SmsClient;
 
@@ -21,13 +22,14 @@ try {
 
     // Create an advanced SMS with all options
     $request = new CreateMessageRequest(
-        '+40742***350',                                          // recipient
-        'Your verification code is: 123456. Valid for 24h.',   // body
-        'Your verification code is: ******. Valid for 24h.',   // visibleBody (for logs)
-        24,                                                      // validity (hours)
-        date('Y-m-d H:i:s', strtotime('+1 hour')),             // scheduleAt
-        'https://yourapp.com/webhooks/sms',                     // callbackUrl
-        'Calisero'                                               // sender
+        '+40742***350',                                                          // recipient
+        'Your code is 123456. Manage alerts: https://yourapp.com/account/alerts', // body
+        'Your code is ******. Manage alerts: https://yourapp.com/account/alerts', // visibleBody (for logs)
+        24,                                                                      // validity (hours)
+        date('Y-m-d H:i:s', strtotime('+1 hour')),                               // scheduleAt
+        'https://yourapp.com/webhooks/sms',                                      // callbackUrl
+        'Calisero',                                                              // sender
+        true                                                                     // shortenUrls
     );
 
     // Send advanced SMS using fluent chaining
@@ -47,6 +49,20 @@ try {
     echo '📅 Scheduled: ' . ($message->getScheduledAt() ?? 'Send immediately') . "\n";
     echo '🔗 Callback URL: ' . ($message->getCallbackUrl() ?? 'None') . "\n";
     echo '👤 Sender: ' . ($message->getSender() ?? 'Default') . "\n";
+
+    // The links of the body that were replaced by short ones
+    $shortenedUrls = $message->getShortenedUrls();
+    echo '✂️ Shortened URLs: ' . (count($shortenedUrls) > 0 ? count($shortenedUrls) : 'None') . "\n";
+    foreach ($shortenedUrls as $link) {
+        echo "  - {$link->getShortenedLink()} → {$link->getOriginalLink()}\n";
+    }
+
+    // What the answer's headers report: trace ID and the account's daily sending limit
+    $meta = $response->getResponseMeta();
+    echo '🆔 Trace ID: ' . ($meta->getTraceId() ?? 'N/A') . "\n";
+    if ($meta->getDailyLimit() !== null) {
+        echo "📊 Daily limit: {$meta->getDailyRemaining()} of {$meta->getDailyLimit()} messages left today\n";
+    }
 } catch (ValidationException $e) {
     echo "❌ Validation error: {$e->getMessage()}\n";
 
@@ -56,6 +72,9 @@ try {
             echo "  - {$field}: " . implode(', ', $errors) . "\n";
         }
     }
+} catch (DailyLimitExceededException $e) {
+    echo "❌ Daily sending limit reached: {$e->getMessage()}\n";
+    echo '⏰ Sending resumes at: ' . ($e->getResetsAt() ?? 'midnight, Romania time') . "\n";
 } catch (ApiException $e) {
     echo "❌ API error: {$e->getMessage()}\n";
 
@@ -63,7 +82,7 @@ try {
         echo "🔢 Status Code: {$e->getStatusCode()}\n";
     }
 
-    if ($e->getRequestId()) {
-        echo "🆔 Request ID: {$e->getRequestId()}\n";
+    if ($e->getTraceId()) {
+        echo "🆔 Trace ID: {$e->getTraceId()}\n";
     }
 }

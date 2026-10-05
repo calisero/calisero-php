@@ -84,4 +84,12 @@ class SmsClientTest extends TestCase
         $this->assertNotSame($messageService, $accountService);
         $this->assertNotSame($optOutService, $accountService);
     }
+
+    public function testVersionMatchesTheLatestChangelogEntry(): void
+    {
+        $changelog = (string) \file_get_contents(__DIR__ . '/../../CHANGELOG.md');
+
+        $this->assertSame(1, \preg_match('/^## \[(\d+\.\d+\.\d+)\]/m', $changelog, $matches));
+        $this->assertSame($matches[1], SmsClient::VERSION, 'Set SmsClient::VERSION to the version being released');
+    }
 }

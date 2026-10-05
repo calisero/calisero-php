@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Calisero\Sms\Dto\CreateVerificationRequest;
 use Calisero\Sms\Exceptions\ApiException;
+use Calisero\Sms\Exceptions\DailyLimitExceededException;
 use Calisero\Sms\Exceptions\ValidationException;
 use Calisero\Sms\SmsClient;
 
@@ -39,6 +40,15 @@ try {
     echo "📊 Status: {$verification->getStatus()}\n";
     echo "⏰ Expires at: {$verification->getExpiresAt()}\n";
     echo "🧪 Attempts: {$verification->getAttempts()}\n";
+
+    // The code's SMS counts towards the account's daily sending limit
+    $dailyRemaining = $response->getResponseMeta()->getDailyRemaining();
+    if ($dailyRemaining !== null) {
+        echo "📊 Daily limit: {$dailyRemaining} messages left today\n";
+    }
+} catch (DailyLimitExceededException $e) {
+    echo "❌ Daily sending limit reached, no code was sent: {$e->getMessage()}\n";
+    echo '⏰ Sending resumes at: ' . ($e->getResetsAt() ?? 'midnight, Romania time') . "\n";
 } catch (ValidationException $e) {
     echo "❌ Validation error: {$e->getMessage()}\n";
 
@@ -55,7 +65,7 @@ try {
         echo "🔢 Status Code: {$e->getStatusCode()}\n";
     }
 
-    if ($e->getRequestId()) {
-        echo "🆔 Request ID: {$e->getRequestId()}\n";
+    if ($e->getTraceId()) {
+        echo "🆔 Trace ID: {$e->getTraceId()}\n";
     }
 }

@@ -18,11 +18,14 @@ Send SMS messages, manage opt-outs for GDPR compliance, and monitor your account
 - 🌐 **Self-Contained**: Built-in HTTP client using cURL, no external dependencies
 - 🔄 **Idempotency**: Built-in idempotency key generation for safe retries
 - 📱 **Complete API Coverage**: All Calisero SMS API endpoints supported
+- ✂️ **URL Shortening**: Shorten the links in a message body and track their clicks
+- 📊 **Limits & Tracing**: Daily sending limit, request rate limit and the trace ID of every message, verification and error
+- 📬 **Delivery Webhooks**: Typed, validated parsing of delivery status callbacks
 - 🛡️ **Error Handling**: Comprehensive exception hierarchy for different error types
 - 📖 **Rich Examples**: 14+ working examples covering every use case
 - ⚡ **Zero Configuration**: Works immediately after installation
 - 🏗️ **Production Ready**: Used in production by businesses worldwide
-- � **Minimal Dependencies**: Only requires PHP and basic extensions
+- 📦 **Minimal Dependencies**: Only requires PHP and basic extensions
 - 🎯 **Laravel Integration**: Official Laravel wrapper `calisero/laravel-sms` available
 - 🐘 **Wide PHP Support**: Runs on PHP 7.4 through PHP 8.5
 
@@ -208,17 +211,22 @@ $client = SmsClient::create('your-api-key-here');
 
 $request = new CreateMessageRequest(
     recipient: '+40742***350',
-    body: 'Your verification code is: 123456',
-    visibleBody: 'Your verification code is: ******',       // For logs/display
+    body: 'Your code is 123456. Manage alerts: https://yoursite.com/alerts',
+    visibleBody: 'Your code is ******. Manage alerts: https://yoursite.com/alerts', // For logs/display
     validity: 24,                                           // 24 hours validity
     scheduleAt: '2024-12-25 10:00:00',                      // Schedule for later
     callbackUrl: 'https://yoursite.com/webhook',            // Delivery reports
-    sender: 'Calisero'                                      // Custom sender
+    sender: 'Calisero',                                     // Custom sender
+    shortenUrls: true                                       // Shorten the links of the body
 );
 
 $response = $client->messages()->create($request);
 echo "Advanced message created with ID: " . $response->getData()->getId() . "\n";
 ```
+
+> **PHP 7.4**: named arguments need PHP 8.0. On PHP 7.4 pass the arguments in the
+> constructor's order: `recipient`, `body`, `visibleBody`, `validity`, `scheduleAt`,
+> `callbackUrl`, `sender`, `shortenUrls` (use `null` for the ones you skip).
 
 ## Authentication
 
@@ -251,10 +259,11 @@ class CustomAuthProvider implements AuthProviderInterface
         return $this->fetchTokenFromSomewhere();
     }
 }
-
-// Note: Custom auth providers require direct SmsClient usage
-// Contact support@calisero.ro for advanced authentication examples
 ```
+
+`SmsClient::create()` takes the API key itself. To authenticate through a provider
+like this one, build the HTTP client and the services yourself, as shown in
+[Building the Client Yourself](#building-the-client-yourself).
 
 ## 📚 Examples
 
@@ -262,8 +271,8 @@ This library includes comprehensive examples for all operations. Check the [`exa
 
 ### 📱 Message Examples
 - **[`examples/messages/send_simple_sms.php`](examples/messages/send_simple_sms.php)** - Send basic SMS messages
-- **[`examples/messages/send_advanced_sms.php`](examples/messages/send_advanced_sms.php)** - Advanced SMS with scheduling, callbacks, custom sender
-- **[`examples/messages/send_bulk_sms.php`](examples/messages/send_bulk_sms.php)** - Bulk SMS with rate limiting and error handling
+- **[`examples/messages/send_advanced_sms.php`](examples/messages/send_advanced_sms.php)** - Advanced SMS with scheduling, callbacks, custom sender and URL shortening
+- **[`examples/messages/send_bulk_sms.php`](examples/messages/send_bulk_sms.php)** - Bulk SMS with rate limiting, error handling and the daily sending limit
 - **[`examples/messages/get_sms.php`](examples/messages/get_sms.php)** - Retrieve message details and status
 - **[`examples/messages/list_sms.php`](examples/messages/list_sms.php)** - List messages with pagination
 - **[`examples/messages/delete_sms.php`](examples/messages/delete_sms.php)** - Cancel scheduled messages
@@ -283,7 +292,10 @@ This library includes comprehensive examples for all operations. Check the [`exa
 
 ### 👤 Account Examples
 - **[`examples/account/get_account.php`](examples/account/get_account.php)** - Get account information and details
-- **[`examples/account/check_balance.php`](examples/account/check_balance.php)** - Check balance with analysis and recommendations
+- **[`examples/account/check_balance.php`](examples/account/check_balance.php)** - Check balance and daily sending limit with analysis and recommendations
+
+### 📬 Webhook Examples
+- **[`examples/webhooks/delivery_webhook.php`](examples/webhooks/delivery_webhook.php)** - Receive delivery status callbacks
 
 ### 🛡️ Error Handling
 - **[`examples/error_handling_complete.php`](examples/error_handling_complete.php)** - Comprehensive error handling for all exception types
@@ -336,7 +348,53 @@ $message = $response->getData();
 echo $message->getId();        // Message UUID
 echo $message->getStatus();    // Message status
 echo $message->getParts();     // Number of SMS parts
+
+// What the answer's headers report
+$meta = $response->getResponseMeta();
+echo $meta->getTraceId();         // The request's trace ID
+echo $meta->getDailyRemaining();  // Messages left today (null: no daily limit)
 ```
+
+#### Shorten URLs
+
+Set `shortenUrls` to `true` and Calisero replaces every `http://` and `https://`
+link of the body with a short one before sending, so the SMS gets shorter (and may
+take fewer parts). Each shortened link comes back with its click statistics:
+
+```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\SmsClient;
+use Calisero\Sms\Dto\CreateMessageRequest;
+
+$client = SmsClient::create('your-api-key-here');
+
+$request = new CreateMessageRequest(
+    recipient: '+40742***350',
+    body: 'Your order has shipped! Track it: https://yourstore.com/orders/12345/tracking',
+    shortenUrls: true
+);
+
+$message = $client->messages()->create($request)->getData();
+
+foreach ($message->getShortenedUrls() as $link) {
+    echo $link->getOriginalLink();   // https://yourstore.com/orders/12345/tracking
+    echo $link->getShortenedLink();  // https://calisero.ro/s/ghJKPV
+}
+
+// Later: how many times the link was opened
+$message = $client->messages()->get($message->getId())->getData();
+
+foreach ($message->getShortenedUrls() as $link) {
+    echo $link->getClickCount();     // Number of clicks
+    echo $link->getLastClick();      // Last click timestamp, or null
+}
+```
+
+Links are not shortened unless you ask: leave `shortenUrls` out (or pass `false`)
+and the body is sent as written.
 
 #### Get Message Details
 
@@ -432,6 +490,9 @@ $verification = $response->getData();
 echo $verification->getId();       // Verification UUID
 echo $verification->getPhone();    // Phone number
 echo $verification->getStatus();   // 'unverified' or 'verified'
+
+// The code's SMS counts towards the account's daily sending limit
+echo $response->getResponseMeta()->getDailyRemaining(); // Messages left today (null: no daily limit)
 ```
 
 #### Get Verification Details
@@ -600,6 +661,158 @@ echo 'Account: ' . $account->getName() . "\n";
 echo 'Credit: ' . $account->getCredit() . "\n";
 echo 'Status: ' . $account->getStatus() . "\n";
 echo 'Sandbox: ' . ($account->isSandbox() ? 'Yes' : 'No') . "\n";
+
+// Daily sending limit (null when no daily limit applies)
+echo 'Daily limit: ' . ($account->getDailyLimit() ?? 'none') . "\n";
+echo 'Left today: ' . ($account->getDailyRemaining() ?? 'unlimited') . "\n";
+echo 'Sent today: ' . $account->getSentToday() . "\n";
+```
+
+### Delivery Status Webhooks
+
+When a message has a `callbackUrl`, Calisero posts a JSON payload to it each time
+the message's status changes (`sent`, `delivered` or `undelivered`).
+`DeliveryWebhookMessage` reads and validates it:
+
+```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Dto\DeliveryWebhookMessage;
+
+try {
+    $webhook = DeliveryWebhookMessage::fromJson((string) file_get_contents('php://input'));
+} catch (InvalidArgumentException $e) {
+    http_response_code(400); // Malformed payload
+    exit;
+}
+
+echo $webhook->getMessageId();        // The message's UUID
+echo $webhook->getStatus();           // 'sent', 'delivered' or 'undelivered'
+echo $webhook->getDeliveredAt();      // Set for 'delivered'
+echo $webhook->getPrice();            // Price charged for the message's parts
+echo $webhook->getRemainingBalance(); // Account balance after billing
+echo $webhook->getDailyRemaining();   // Messages left today when it was sent (null: no daily limit)
+
+// Answer with any 2xx within 2 seconds
+http_response_code(200);
+echo '{"received":true}';
+```
+
+Only a failed connection or an answer slower than 2 seconds is retried (at most 5
+attempts in total); a non-2xx answer is not. Keep the endpoint fast: record the
+status or queue a job, then answer. In a framework, pass the decoded request body
+to `DeliveryWebhookMessage::fromArray()` instead.
+
+## Daily Sending Limit
+
+Every account has its own daily sending limit: how many messages it can send in a
+day. A new account starts with a default limit and keeps it until Calisero raises
+it on request.
+
+- Every real message counts once, whatever its number of parts: the messages of
+  `messages()->create()` and the OTP codes of `verifications()->create()` alike.
+  A scheduled message counts on the day it is created.
+- Test messages (a sandbox account or a sandbox API key) never count and are never refused.
+- The day ends at midnight, Romania time (Europe/Bucharest), whatever time zone you send from.
+
+You can see the limit and what is left of it in three places:
+
+```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\SmsClient;
+use Calisero\Sms\Dto\CreateMessageRequest;
+
+$client = SmsClient::create('your-api-key-here');
+
+// 1. On the account
+$account = $client->accounts()->get('account-uuid-here')->getData();
+echo $account->getDailyLimit();      // e.g. 1000, or null when no daily limit applies
+echo $account->getDailyRemaining();  // e.g. 873
+echo $account->getSentToday();       // e.g. 127
+
+// 2. After every message or verification created (X-Daily-Limit / X-Daily-Remaining)
+$response = $client->messages()->create(new CreateMessageRequest(
+    recipient: '+40742***350',
+    body: 'Hello!'
+));
+echo $response->getResponseMeta()->getDailyLimit();      // e.g. 1000
+echo $response->getResponseMeta()->getDailyRemaining();  // e.g. 872, after this message
+
+// 3. In every delivery status callback: DeliveryWebhookMessage::getDailyRemaining()
+```
+
+Once the limit is reached, new messages and verifications are refused with a
+`DailyLimitExceededException` until midnight, Romania time. Nothing is sent and
+nothing is billed:
+
+```php
+use Calisero\Sms\Exceptions\DailyLimitExceededException;
+
+try {
+    $client->messages()->create($request);
+} catch (DailyLimitExceededException $e) {
+    echo $e->getMessage();         // What happened and when the limit resets
+    echo $e->getDailyLimit();      // e.g. 1000
+    echo $e->getDailyRemaining();  // 0
+    echo $e->getResetsAt();        // e.g. 2026-10-01T00:00:00+03:00
+    echo $e->getRetryAfter();      // Seconds until the reset
+}
+```
+
+To raise the limit, contact Calisero with your account and the daily volume you expect.
+
+## Rate Limits & Trace ID
+
+### Request Rate Limit
+
+Separately from the daily sending limit, each API user may make **240 requests a
+minute**, on every endpoint. Above that the API answers `429` and the library throws
+a `RateLimitedException`:
+
+```php
+use Calisero\Sms\Exceptions\DailyLimitExceededException;
+use Calisero\Sms\Exceptions\RateLimitedException;
+
+try {
+    $client->messages()->create($request);
+} catch (DailyLimitExceededException $e) {
+    // The daily sending limit: wait until $e->getResetsAt()
+} catch (RateLimitedException $e) {
+    // The request rate limit: wait a few seconds and retry
+    sleep($e->getRetryAfter() ?? 1);
+    echo $e->getRateLimitLimit();      // 240
+    echo $e->getRateLimitRemaining();  // 0
+    echo $e->getRateLimitReset();      // Unix timestamp when requests are accepted again
+}
+```
+
+`DailyLimitExceededException` extends `RateLimitedException`, so catch it first.
+After a successful create, `getResponseMeta()->getRateLimitRemaining()` tells how many
+requests are left in the current minute.
+
+### Trace ID
+
+Every API answer carries the request's trace ID. Log it: quoting it to support
+lets Calisero find the request at once, and the dashboard shows everything that
+happened to it under **Developers → Debug**.
+
+```php
+use Calisero\Sms\Exceptions\ApiException;
+
+// On success
+echo $client->messages()->create($request)->getResponseMeta()->getTraceId();
+
+// On error
+try {
+    $client->messages()->create($request);
+} catch (ApiException $e) {
+    error_log('Calisero request ' . $e->getTraceId() . ' failed: ' . $e->getMessage());
+}
 ```
 
 ## Error Handling
@@ -619,6 +832,7 @@ use Calisero\Sms\Exceptions\{
     ForbiddenException,
     NotFoundException,
     ValidationException,
+    DailyLimitExceededException,
     RateLimitedException,
     ServerException,
     TransportException
@@ -643,8 +857,11 @@ try {
     foreach ($e->getValidationErrors() as $field => $errors) {
         echo "$field: " . implode(', ', $errors) . "\n";
     }
+} catch (DailyLimitExceededException $e) {
+    // Handle the daily sending limit (429): nothing was sent, wait for the reset
+    echo "Daily limit reached. Sending resumes at: " . $e->getResetsAt() . "\n";
 } catch (RateLimitedException $e) {
-    // Handle rate limiting (429)
+    // Handle the request rate limit (429)
     echo "Rate limited. Retry after: " . $e->getRetryAfter() . " seconds\n";
 } catch (ServerException $e) {
     // Handle server errors (5xx)
@@ -656,9 +873,25 @@ try {
     // Handle any other API errors
     echo "API error: " . $e->getMessage() . "\n";
     echo "Status code: " . $e->getStatusCode() . "\n";
-    echo "Request ID: " . $e->getRequestId() . "\n";
+    echo "Trace ID: " . $e->getTraceId() . "\n";
 }
 ```
+
+Every `ApiException` carries the API's own error message (`getMessage()`), the HTTP
+status (`getStatusCode()`), the request's trace ID (`getTraceId()`; `getRequestId()`
+returns the same value) and the decoded error body (`getErrorDetails()`).
+
+| Exception | When |
+|---|---|
+| `UnauthorizedException` | `401`: invalid or missing API key |
+| `ForbiddenException` | `403`: not allowed, e.g. deleting a message already sent |
+| `NotFoundException` | `404`: the resource does not exist |
+| `ValidationException` | `422`: invalid request data; field errors in `getValidationErrors()` |
+| `DailyLimitExceededException` | `429`: the account reached its daily sending limit |
+| `RateLimitedException` | `429`: more than 240 requests a minute |
+| `ServerException` | `500`, `502`, `503`, `504` |
+| `ApiException` | Any other API error; base class of the above |
+| `TransportException` | The request got no answer (network error, timeout) |
 
 ## Advanced Configuration
 
@@ -679,15 +912,77 @@ $client = SmsClient::create('your-api-key-here');
 
 The library uses an optimized cURL-based HTTP client internally, providing excellent performance without external dependencies.
 
-### Custom Idempotency Key Provider
+`SmsClient::create()` sends every request to `https://rest.calisero.ro/api/v1` with
+a 30-second timeout (10 seconds to connect), authenticates with the API key you
+pass, and adds a random UUID `Idempotency-Key` header to each message and
+verification it creates.
+
+### Building the Client Yourself
+
+`SmsClient::create()` is the only way to get an `SmsClient`, and its setup is
+fixed. For anything else (your own authentication or idempotency key provider,
+other timeouts, or the raw response to each request), build the HTTP client and
+the services yourself: every service takes the `HttpClient` in its constructor.
 
 ```php
 <?php
 
 require_once 'vendor/autoload.php';
 
+use Calisero\Sms\Auth\BearerTokenAuthProvider;
+use Calisero\Sms\Dto\CreateMessageRequest;
+use Calisero\Sms\Http\BaseHttpClient;
+use Calisero\Sms\Http\Factory\HttpFactory;
+use Calisero\Sms\Http\HttpClient;
+use Calisero\Sms\IdempotencyKey\UuidIdempotencyKeyProvider;
+use Calisero\Sms\Services\AccountService;
+use Calisero\Sms\Services\MessageService;
+use Calisero\Sms\Services\OptOutService;
+use Calisero\Sms\Services\VerificationService;
+
+$httpClient = new HttpClient(
+    new BaseHttpClient(60, 5),                          // Timeout and connect timeout, in seconds
+    new HttpFactory(),
+    new BearerTokenAuthProvider('your-api-key-here'),   // Or your own AuthProviderInterface
+    'https://rest.calisero.ro/api/v1',
+    new UuidIdempotencyKeyProvider()                    // Or your own IdempotencyKeyProviderInterface
+);
+
+// The same services SmsClient returns from messages(), verifications(), optOuts() and accounts()
+$messages = new MessageService($httpClient);
+$verifications = new VerificationService($httpClient);
+$optOuts = new OptOutService($httpClient);
+$accounts = new AccountService($httpClient);
+
+$messages->create(new CreateMessageRequest(
+    recipient: '+40742***350',
+    body: 'Hello!'
+));
+
+$account = $accounts->get('account-uuid-here')->getData();
+
+// The raw response to the last request, headers included: here, the trace ID of the GET
+echo $httpClient->getLastResponse()?->getHeaderLine('X-Trace-Id');
+```
+
+### Custom Idempotency Key Provider
+
+The library sends an `Idempotency-Key` header with each message and verification it
+creates, a random UUID by default. To generate the key yourself, implement
+`IdempotencyKeyProviderInterface` and pass your provider as the last argument of
+`HttpClient`:
+
+```php
+<?php
+
+require_once 'vendor/autoload.php';
+
+use Calisero\Sms\Auth\BearerTokenAuthProvider;
 use Calisero\Sms\Contracts\IdempotencyKeyProviderInterface;
-use Calisero\Sms\SmsClient;
+use Calisero\Sms\Http\BaseHttpClient;
+use Calisero\Sms\Http\Factory\HttpFactory;
+use Calisero\Sms\Http\HttpClient;
+use Calisero\Sms\Services\MessageService;
 
 class CustomIdempotencyProvider implements IdempotencyKeyProviderInterface
 {
@@ -697,15 +992,15 @@ class CustomIdempotencyProvider implements IdempotencyKeyProviderInterface
     }
 }
 
-// Note: This requires using SmsClient directly instead of SmsClient::create()
-$client = new SmsClient(
-    $httpClient,
-    $requestFactory,
-    $streamFactory,
-    $authProvider,
+$httpClient = new HttpClient(
+    new BaseHttpClient(30, 10),
+    new HttpFactory(),
+    new BearerTokenAuthProvider('your-api-key-here'),
     'https://rest.calisero.ro/api/v1',
     new CustomIdempotencyProvider()
 );
+
+$messages = new MessageService($httpClient);
 ```
 
 ## Testing
@@ -731,32 +1026,48 @@ composer qa
 
 ### Testing Your Implementation
 
+`SmsClient::create()` builds its own HTTP client, so let the code you want to test
+receive the service it uses, such as a `MessageService`: pass it
+`$client->messages()` in production. In tests, build the service on a mocked
+`HttpClient` that returns the API's JSON body, decoded:
+
 ```php
 <?php
 
-// In your tests, you can mock the HTTP client
-use PHPUnit\Framework\TestCase;
-use Calisero\Sms\SmsClient;
 use Calisero\Sms\Dto\CreateMessageRequest;
-use Calisero\Sms\Contracts\HttpClientInterface;
+use Calisero\Sms\Http\HttpClient;
+use Calisero\Sms\Services\MessageService;
+use PHPUnit\Framework\TestCase;
 
 class YourSmsTest extends TestCase
 {
-    public function testSendMessage()
+    public function testSendMessage(): void
     {
-        $mockClient = $this->createMock(HttpClientInterface::class);
-        
-        // Set up your mock expectations for testing
-        // Use the library's built-in interfaces for clean testing
-        
-        $client = SmsClient::create('test-token');
-        // ... your test implementation
-    }
-}
-                // ... other fields
+        $httpClient = $this->createMock(HttpClient::class);
+        $httpClient->expects($this->once())
+            ->method('post')
+            ->with('/messages', ['recipient' => '+40742***350', 'body' => 'Hello!'], true)
+            ->willReturn([
+                'data' => [
+                    'id' => '9e2574e8-3615-4090-9b5a-0fc812079da8',
+                    'recipient' => '+40742***350',
+                    'body' => 'Hello!',
+                    'parts' => 1,
+                    'created_at' => '2025-02-06T10:18:43.000000Z',
+                    'status' => 'scheduled',
+                ],
+            ]);
+
+        $messages = new MessageService($httpClient);
+        $message = $messages->create(new CreateMessageRequest('+40742***350', 'Hello!'))->getData();
+
+        $this->assertSame('scheduled', $message->getStatus());
     }
 }
 ```
+
+The library's own service tests, in [`tests/Unit/Services`](tests/Unit/Services),
+work the same way; [TESTING.md](TESTING.md) describes the whole suite.
 
 ## Contributing
 

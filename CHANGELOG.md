@@ -5,6 +5,110 @@ All notable changes to `calisero-php` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-10-05
+
+Support for version 1.0.14 of the Calisero API. Only constructors gained
+parameters, all optional and last; no other public method changed its signature.
+Behavior changes are listed under Changed and Fixed.
+
+### Added
+- **URL shortening.** `CreateMessageRequest` takes a new optional `shortenUrls`
+  argument (sent as `shorten_urls`): Calisero replaces the `http://` and
+  `https://` links of the body with short ones before sending.
+  `Message::getShortenedUrls()` returns them, on create, get and list, as the new
+  `ShortenedLink` DTO: `getOriginalLink()`, `getShortenedLink()`,
+  `getClickCount()`, `getLastClick()`, `getCreatedAt()`.
+- **Daily sending limit.**
+  - `Account::getDailyLimit()`, `getDailyRemaining()` and `getSentToday()`
+    (`daily_limit`, `daily_remaining`, `sent_today`).
+  - New `ResponseMeta` DTO, returned by `CreateMessageResponse::getResponseMeta()`
+    and `CreateVerificationResponse::getResponseMeta()`: the `X-Daily-Limit` and
+    `X-Daily-Remaining` headers of the answer, along with `X-RateLimit-Limit`,
+    `X-RateLimit-Remaining` and `X-Trace-Id`. Both responses also gained
+    `withResponseMeta()`; their `fromArray()` keeps its signature, so subclasses
+    that override it keep working.
+  - New `DailyLimitExceededException`, thrown for the `429` whose body carries
+    the code `daily_limit_exceeded`: `getDailyLimit()`, `getDailyRemaining()`,
+    `getResetsAt()`. It extends `RateLimitedException`, so existing
+    `catch (RateLimitedException $e)` blocks keep catching it.
+- **Request rate limit details.** `RateLimitedException::getRateLimitLimit()`,
+  `getRateLimitRemaining()` and `getRateLimitReset()`, from the `X-RateLimit-*`
+  headers.
+- **Trace ID.** `ApiException::getTraceId()`: the `X-Trace-Id` header of the
+  answer, or the `trace_id` of the error body. `ResponseMeta::getTraceId()` gives
+  it for successful creates.
+- **Delivery status webhooks.** New `DeliveryWebhookMessage` DTO whose
+  `fromJson()` and `fromArray()` read and validate the callback payload, the new
+  `dailyLimit`, `dailyRemaining` and `sentToday` fields included, and throw
+  `\InvalidArgumentException` on a malformed one.
+- `HttpClient::getLastResponse()`: the raw response to the last request, headers
+  included. The services use it to fill `ResponseMeta`; it is reachable only
+  when you build the `HttpClient` and the services yourself (see "Building the
+  Client Yourself" in the README), since `SmsClient::create()` does not expose
+  its `HttpClient`.
+- `SmsClient::VERSION`, kept in step with this changelog by a test.
+- Examples: `examples/webhooks/delivery_webhook.php`; URL shortening in
+  `send_advanced_sms.php`; the daily sending limit in `send_bulk_sms.php` (which
+  now stops once the limit is used up), `check_balance.php`, `get_account.php`,
+  `create_verification.php` and `error_handling_complete.php`.
+- Unit tests for all of the above, plus `HttpClient` tests that run real
+  `Request` and `Response` objects through the API's actual error bodies and
+  headers: 89 tests, up from 47.
+
+### Changed
+- The `User-Agent` header names the library version (`Calisero-SMS-PHP/2.3.0`)
+  instead of the fixed `Calisero-SMS-PHP/1.0`.
+- `ApiException::getErrorDetails()` holds the decoded error body for every
+  status, not only for 400, 422 and 429.
+- `ValidationException::getValidationErrors()` is empty when a `422` body carries
+  no field errors; it used to return the whole body, which now includes
+  `trace_id`. Every `422` the API sends today has field errors (`errors`), so
+  this only guards against bodies that come from elsewhere, such as a proxy.
+- The examples print the trace ID (`getTraceId()`) instead of the request ID.
+
+### Fixed
+- **Exception messages were always generic.** The client read the error
+  description from `error.message`, but the API sends it as `message`, so every
+  exception said `HTTP error 404` and the like. Exceptions now carry the API's
+  message (`Resource not found!`, `Too Many Attempts.`, the daily limit
+  explanation…); `error.message` is still read as a fallback.
+- **`getRequestId()` was always `null`.** It read an `X-Request-ID` header the
+  API never sends. It now returns the trace ID, like `getTraceId()`.
+- **Response headers were missed over HTTP/1.1.** `Response::getHeader()` looked
+  names up in lowercase while `BaseHttpClient` keeps the server's spelling, so
+  over HTTP/1.1 `Retry-After` was never found and `getRetryAfter()` returned
+  `null`. It only worked over HTTP/2, where cURL reports names in lowercase.
+  Header names now match case-insensitively.
+- **A PHP 8.5 deprecation notice on every request.** `BaseHttpClient` called
+  `curl_close()`, which PHP 8.5 deprecates (it has done nothing since PHP 8.0).
+  It is now called on PHP 7.4 only. The unit tests never reach
+  `BaseHttpClient`, which is why the 2.2.0 test run on PHP 8.5 reported no
+  deprecations.
+
+### Documentation
+- `README.md`: new "Shorten URLs", "Delivery Status Webhooks", "Daily Sending
+  Limit" and "Rate Limits & Trace ID" sections; the Error Handling section now
+  covers `DailyLimitExceededException` and the trace ID and lists every
+  exception with its status; the account and verification snippets show the
+  daily limit.
+- `examples/README.md` lists the webhook example and the daily limit refusal.
+- `TESTING.md` rewritten to describe the actual suite: 89 tests in 16 classes,
+  what each class covers, how the tests mock the HTTP layer, and the PHP and
+  PHPUnit versions every test must run on. It still described the `Sms` factory
+  and the stream factory removed in 2.0.0, and 114 tests that did not exist.
+- `README.md`: the "Custom Authentication Provider" and "Custom Idempotency Key
+  Provider" sections called `new SmsClient(...)`, whose constructor is private;
+  a new "Building the Client Yourself" section shows how to build the
+  `HttpClient` and the services instead. The "Testing Your Implementation"
+  snippet, which did not parse, now tests a `MessageService` built on a mocked
+  `HttpClient`.
+
+### Notes
+- Upgrading needs no code change. To tell the two kinds of `429` apart, catch
+  `DailyLimitExceededException` before `RateLimitedException`.
+- `ResponseMeta` is only available on `messages()->create()` and
+  `verifications()->create()`, the two calls that report the daily limit.
+
 ## [2.2.0] - 2026-09-12
 
 ### Added
