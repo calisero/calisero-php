@@ -29,6 +29,7 @@ class HttpClient
     private AuthProviderInterface $authProvider;
     private ?IdempotencyKeyProviderInterface $idempotencyKeyProvider;
     private string $baseUri;
+    private string $userAgent;
     private ?ResponseInterface $lastResponse = null;
 
     public function __construct(
@@ -43,6 +44,7 @@ class HttpClient
         $this->authProvider = $authProvider;
         $this->baseUri = \rtrim($baseUri, '/');
         $this->idempotencyKeyProvider = $idempotencyKeyProvider;
+        $this->userAgent = self::userAgent();
     }
 
     /**
@@ -146,13 +148,26 @@ class HttpClient
     }
 
     /**
+     * The library, PHP and the platform, as the other Calisero libraries name
+     * theirs: Calisero-SMS-PHP/2.3.1 (PHP 8.5.3; linux x86_64).
+     */
+    private static function userAgent(): string
+    {
+        // php_uname() may be disabled on shared hosting; the machine is left out then
+        $machine = \function_exists('php_uname') ? \strtolower(\php_uname('m')) : '';
+        $platform = \trim(\strtolower(\PHP_OS_FAMILY) . ' ' . $machine);
+
+        return \sprintf('Calisero-SMS-PHP/%s (PHP %s; %s)', SmsClient::VERSION, \PHP_VERSION, $platform);
+    }
+
+    /**
      * Add authentication and standard headers to a request.
      */
     private function addHeaders(RequestInterface $request, bool $useIdempotency = false): RequestInterface
     {
         $request = $request->withHeader('Accept', 'application/json');
         $request = $request->withHeader('Content-Type', 'application/json');
-        $request = $request->withHeader('User-Agent', 'Calisero-SMS-PHP/' . SmsClient::VERSION);
+        $request = $request->withHeader('User-Agent', $this->userAgent);
 
         // Add authentication
         $request = $request->withHeader('Authorization', 'Bearer ' . $this->authProvider->getToken());

@@ -4,8 +4,8 @@ The library's unit tests live in `tests/Unit` and run with PHPUnit. They make no
 network requests: the services run against a mocked `HttpClient`, and the HTTP
 layer against stub transports and real `Request` and `Response` objects.
 
-As of 2.3.0 the suite has **89 tests in 16 test classes**. PHPUnit counts
-assertions differently from one version to the next: 501 on PHPUnit 12.5, 443 on
+As of 2.3.1 the suite has **89 tests in 16 test classes**. PHPUnit counts
+assertions differently from one version to the next: 502 on PHPUnit 12.5, 444 on
 PHPUnit 9.6.
 
 ## Running the Tests
@@ -64,7 +64,7 @@ answer's headers, stub `getLastResponse()` with a real
 | Test class | Tests | Covers |
 |---|---|---|
 | `HttpClientTest` | 6 | Building GET and POST requests (URL, headers, JSON body) with a mocked transport, request factory and auth provider, and keeping their response; mapping 400, 401, 404 and 422 answers to exceptions |
-| `HttpClientResponseHandlingTest` | 12 | Real `Request` and `Response` objects through a stub transport, answered as the API answers: the error message and the trace ID (from the header in any spelling, from the error body, from an older `X-Request-ID` header); an error body that is not JSON; 422s with and without field errors; the request rate limit's 429 against the daily sending limit's; `getLastResponse()` after a success, an error and a transport failure; the version in the `User-Agent` header |
+| `HttpClientResponseHandlingTest` | 12 | Real `Request` and `Response` objects through a stub transport, answered as the API answers: the error message and the trace ID (from the header in any spelling, from the error body, from an older `X-Request-ID` header); an error body that is not JSON; 422s with and without field errors; the request rate limit's 429 against the daily sending limit's; `getLastResponse()` after a success, an error and a transport failure; the `User-Agent` header, with the library, PHP and platform |
 | `ResponseTest` | 3 | Header lookup that ignores the case of names, which cURL reports in mixed case over HTTP/1.1 and in lowercase over HTTP/2 |
 
 `BaseHttpClient`, the cURL transport, has no unit tests, since nothing in the suite
