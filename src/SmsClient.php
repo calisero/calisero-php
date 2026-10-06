@@ -22,7 +22,7 @@ class SmsClient
     /**
      * The library's version, sent in the User-Agent header.
      */
-    public const VERSION = '2.3.0';
+    public const VERSION = '2.3.1';
 
     private HttpClient $httpClient;
     private MessageService $messageService;

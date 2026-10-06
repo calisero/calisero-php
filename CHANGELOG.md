@@ -2,159 +2,76 @@
 
 All notable changes to `calisero-php` will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.3.1] - 2026-10-06
+
+### Changed
+- The `User-Agent` header names PHP and the platform along with the library version, the way the other Calisero libraries do: `Calisero-SMS-PHP/2.3.1 (PHP 8.5.3; linux x86_64)` instead of `Calisero-SMS-PHP/2.3.0`. The machine is left out where `php_uname()` is disabled, as some shared hosts do.
+
+### Documentation
+- `README.md` describes the `User-Agent` header under Advanced Configuration.
 
 ## [2.3.0] - 2026-10-05
 
-Support for version 1.0.14 of the Calisero API. Only constructors gained
-parameters, all optional and last; no other public method changed its signature.
-Behavior changes are listed under Changed and Fixed.
+Support for version 1.0.14 of the Calisero API. Only constructors gained parameters, all optional and last; no other public method changed its signature. Behavior changes are listed under Changed and Fixed.
 
 ### Added
-- **URL shortening.** `CreateMessageRequest` takes a new optional `shortenUrls`
-  argument (sent as `shorten_urls`): Calisero replaces the `http://` and
-  `https://` links of the body with short ones before sending.
-  `Message::getShortenedUrls()` returns them, on create, get and list, as the new
-  `ShortenedLink` DTO: `getOriginalLink()`, `getShortenedLink()`,
-  `getClickCount()`, `getLastClick()`, `getCreatedAt()`.
+- **URL shortening.** `CreateMessageRequest` takes a new optional `shortenUrls` argument (sent as `shorten_urls`): Calisero replaces the `http://` and `https://` links of the body with short ones before sending. `Message::getShortenedUrls()` returns them, on create, get and list, as the new `ShortenedLink` DTO: `getOriginalLink()`, `getShortenedLink()`, `getClickCount()`, `getLastClick()`, `getCreatedAt()`.
 - **Daily sending limit.**
-  - `Account::getDailyLimit()`, `getDailyRemaining()` and `getSentToday()`
-    (`daily_limit`, `daily_remaining`, `sent_today`).
-  - New `ResponseMeta` DTO, returned by `CreateMessageResponse::getResponseMeta()`
-    and `CreateVerificationResponse::getResponseMeta()`: the `X-Daily-Limit` and
-    `X-Daily-Remaining` headers of the answer, along with `X-RateLimit-Limit`,
-    `X-RateLimit-Remaining` and `X-Trace-Id`. Both responses also gained
-    `withResponseMeta()`; their `fromArray()` keeps its signature, so subclasses
-    that override it keep working.
-  - New `DailyLimitExceededException`, thrown for the `429` whose body carries
-    the code `daily_limit_exceeded`: `getDailyLimit()`, `getDailyRemaining()`,
-    `getResetsAt()`. It extends `RateLimitedException`, so existing
-    `catch (RateLimitedException $e)` blocks keep catching it.
-- **Request rate limit details.** `RateLimitedException::getRateLimitLimit()`,
-  `getRateLimitRemaining()` and `getRateLimitReset()`, from the `X-RateLimit-*`
-  headers.
-- **Trace ID.** `ApiException::getTraceId()`: the `X-Trace-Id` header of the
-  answer, or the `trace_id` of the error body. `ResponseMeta::getTraceId()` gives
-  it for successful creates.
-- **Delivery status webhooks.** New `DeliveryWebhookMessage` DTO whose
-  `fromJson()` and `fromArray()` read and validate the callback payload, the new
-  `dailyLimit`, `dailyRemaining` and `sentToday` fields included, and throw
-  `\InvalidArgumentException` on a malformed one.
-- `HttpClient::getLastResponse()`: the raw response to the last request, headers
-  included. The services use it to fill `ResponseMeta`; it is reachable only
-  when you build the `HttpClient` and the services yourself (see "Building the
-  Client Yourself" in the README), since `SmsClient::create()` does not expose
-  its `HttpClient`.
+  - `Account::getDailyLimit()`, `getDailyRemaining()` and `getSentToday()` (`daily_limit`, `daily_remaining`, `sent_today`).
+  - New `ResponseMeta` DTO, returned by `CreateMessageResponse::getResponseMeta()` and `CreateVerificationResponse::getResponseMeta()`: the `X-Daily-Limit` and `X-Daily-Remaining` headers of the answer, along with `X-RateLimit-Limit`, `X-RateLimit-Remaining` and `X-Trace-Id`. Both responses also gained `withResponseMeta()`; their `fromArray()` keeps its signature, so subclasses that override it keep working.
+  - New `DailyLimitExceededException`, thrown for the `429` whose body carries the code `daily_limit_exceeded`: `getDailyLimit()`, `getDailyRemaining()`, `getResetsAt()`. It extends `RateLimitedException`, so existing `catch (RateLimitedException $e)` blocks keep catching it.
+- **Request rate limit details.** `RateLimitedException::getRateLimitLimit()`, `getRateLimitRemaining()` and `getRateLimitReset()`, from the `X-RateLimit-*` headers.
+- **Trace ID.** `ApiException::getTraceId()`: the `X-Trace-Id` header of the answer, or the `trace_id` of the error body. `ResponseMeta::getTraceId()` gives it for successful creates.
+- **Delivery status webhooks.** New `DeliveryWebhookMessage` DTO whose `fromJson()` and `fromArray()` read and validate the callback payload, the new `dailyLimit`, `dailyRemaining` and `sentToday` fields included, and throw `\InvalidArgumentException` on a malformed one.
+- `HttpClient::getLastResponse()`: the raw response to the last request, headers included. The services use it to fill `ResponseMeta`; it is reachable only when you build the `HttpClient` and the services yourself (see "Building the Client Yourself" in the README), since `SmsClient::create()` does not expose its `HttpClient`.
 - `SmsClient::VERSION`, kept in step with this changelog by a test.
-- Examples: `examples/webhooks/delivery_webhook.php`; URL shortening in
-  `send_advanced_sms.php`; the daily sending limit in `send_bulk_sms.php` (which
-  now stops once the limit is used up), `check_balance.php`, `get_account.php`,
-  `create_verification.php` and `error_handling_complete.php`.
-- Unit tests for all of the above, plus `HttpClient` tests that run real
-  `Request` and `Response` objects through the API's actual error bodies and
-  headers: 89 tests, up from 47.
+- Examples: `examples/webhooks/delivery_webhook.php`; URL shortening in `send_advanced_sms.php`; the daily sending limit in `send_bulk_sms.php` (which now stops once the limit is used up), `check_balance.php`, `get_account.php`, `create_verification.php` and `error_handling_complete.php`.
+- Unit tests for all of the above, plus `HttpClient` tests that run real `Request` and `Response` objects through the API's actual error bodies and headers: 89 tests, up from 47.
 
 ### Changed
-- The `User-Agent` header names the library version (`Calisero-SMS-PHP/2.3.0`)
-  instead of the fixed `Calisero-SMS-PHP/1.0`.
-- `ApiException::getErrorDetails()` holds the decoded error body for every
-  status, not only for 400, 422 and 429.
-- `ValidationException::getValidationErrors()` is empty when a `422` body carries
-  no field errors; it used to return the whole body, which now includes
-  `trace_id`. Every `422` the API sends today has field errors (`errors`), so
-  this only guards against bodies that come from elsewhere, such as a proxy.
+- The `User-Agent` header names the library version (`Calisero-SMS-PHP/2.3.0`) instead of the fixed `Calisero-SMS-PHP/1.0`.
+- `ApiException::getErrorDetails()` holds the decoded error body for every status, not only for 400, 422 and 429.
+- `ValidationException::getValidationErrors()` is empty when a `422` body carries no field errors; it used to return the whole body, which now includes `trace_id`. Every `422` the API sends today has field errors (`errors`), so this only guards against bodies that come from elsewhere, such as a proxy.
 - The examples print the trace ID (`getTraceId()`) instead of the request ID.
 
 ### Fixed
-- **Exception messages were always generic.** The client read the error
-  description from `error.message`, but the API sends it as `message`, so every
-  exception said `HTTP error 404` and the like. Exceptions now carry the API's
-  message (`Resource not found!`, `Too Many Attempts.`, the daily limit
-  explanation…); `error.message` is still read as a fallback.
-- **`getRequestId()` was always `null`.** It read an `X-Request-ID` header the
-  API never sends. It now returns the trace ID, like `getTraceId()`.
-- **Response headers were missed over HTTP/1.1.** `Response::getHeader()` looked
-  names up in lowercase while `BaseHttpClient` keeps the server's spelling, so
-  over HTTP/1.1 `Retry-After` was never found and `getRetryAfter()` returned
-  `null`. It only worked over HTTP/2, where cURL reports names in lowercase.
-  Header names now match case-insensitively.
-- **A PHP 8.5 deprecation notice on every request.** `BaseHttpClient` called
-  `curl_close()`, which PHP 8.5 deprecates (it has done nothing since PHP 8.0).
-  It is now called on PHP 7.4 only. The unit tests never reach
-  `BaseHttpClient`, which is why the 2.2.0 test run on PHP 8.5 reported no
-  deprecations.
+- **Exception messages were always generic.** The client read the error description from `error.message`, but the API sends it as `message`, so every exception said `HTTP error 404` and the like. Exceptions now carry the API's message (`Resource not found!`, `Too Many Attempts.`, the daily limit explanation…); `error.message` is still read as a fallback.
+- **`getRequestId()` was always `null`.** It read an `X-Request-ID` header the API never sends. It now returns the trace ID, like `getTraceId()`.
+- **Response headers were missed over HTTP/1.1.** `Response::getHeader()` looked names up in lowercase while `BaseHttpClient` keeps the server's spelling, so over HTTP/1.1 `Retry-After` was never found and `getRetryAfter()` returned `null`. It only worked over HTTP/2, where cURL reports names in lowercase. Header names now match case-insensitively.
+- **A PHP 8.5 deprecation notice on every request.** `BaseHttpClient` called `curl_close()`, which PHP 8.5 deprecates (it has done nothing since PHP 8.0). It is now called on PHP 7.4 only. The unit tests never reach `BaseHttpClient`, which is why the 2.2.0 test run on PHP 8.5 reported no deprecations.
 
 ### Documentation
-- `README.md`: new "Shorten URLs", "Delivery Status Webhooks", "Daily Sending
-  Limit" and "Rate Limits & Trace ID" sections; the Error Handling section now
-  covers `DailyLimitExceededException` and the trace ID and lists every
-  exception with its status; the account and verification snippets show the
-  daily limit.
+- `README.md`: new "Shorten URLs", "Delivery Status Webhooks", "Daily Sending Limit" and "Rate Limits & Trace ID" sections; the Error Handling section now covers `DailyLimitExceededException` and the trace ID and lists every exception with its status; the account and verification snippets show the daily limit.
 - `examples/README.md` lists the webhook example and the daily limit refusal.
-- `TESTING.md` rewritten to describe the actual suite: 89 tests in 16 classes,
-  what each class covers, how the tests mock the HTTP layer, and the PHP and
-  PHPUnit versions every test must run on. It still described the `Sms` factory
-  and the stream factory removed in 2.0.0, and 114 tests that did not exist.
-- `README.md`: the "Custom Authentication Provider" and "Custom Idempotency Key
-  Provider" sections called `new SmsClient(...)`, whose constructor is private;
-  a new "Building the Client Yourself" section shows how to build the
-  `HttpClient` and the services instead. The "Testing Your Implementation"
-  snippet, which did not parse, now tests a `MessageService` built on a mocked
-  `HttpClient`.
+- `TESTING.md` rewritten to describe the actual suite: 89 tests in 16 classes, what each class covers, how the tests mock the HTTP layer, and the PHP and PHPUnit versions every test must run on. It still described the `Sms` factory and the stream factory removed in 2.0.0, and 114 tests that did not exist.
+- `README.md`: the "Custom Authentication Provider" and "Custom Idempotency Key Provider" sections called `new SmsClient(...)`, whose constructor is private; a new "Building the Client Yourself" section shows how to build the `HttpClient` and the services instead. The "Testing Your Implementation" snippet, which did not parse, now tests a `MessageService` built on a mocked `HttpClient`.
 
 ### Notes
-- Upgrading needs no code change. To tell the two kinds of `429` apart, catch
-  `DailyLimitExceededException` before `RateLimitedException`.
-- `ResponseMeta` is only available on `messages()->create()` and
-  `verifications()->create()`, the two calls that report the daily limit.
+- Upgrading needs no code change. To tell the two kinds of `429` apart, catch `DailyLimitExceededException` before `RateLimitedException`.
+- `ResponseMeta` is only available on `messages()->create()` and `verifications()->create()`, the two calls that report the daily limit.
 
 ## [2.2.0] - 2026-09-12
 
 ### Added
-- **PHP 8.5 support.** PHP 8.5 is now part of the CI test matrix alongside 7.4,
-  8.0, 8.1, 8.2, 8.3 and 8.4. The library source needed no changes: the full
-  test suite, PHPStan level 9 and PHP-CS-Fixer all run clean on PHP 8.5 with no
-  deprecation notices.
+- **PHP 8.5 support.** PHP 8.5 is now part of the CI test matrix alongside 7.4, 8.0, 8.1, 8.2, 8.3 and 8.4. The library source needed no changes: the full test suite, PHPStan level 9 and PHP-CS-Fixer all run clean on PHP 8.5 with no deprecation notices.
 
 ### Changed
-- Widened the dev tool constraints so every supported PHP version resolves to a
-  toolchain that runs on it:
+- Widened the dev tool constraints so every supported PHP version resolves to a toolchain that runs on it:
   - `phpunit/phpunit` from `^9.6 || ^10.0` to `^9.6 || ^10.5 || ^11.5 || ^12.0`
   - `friendsofphp/php-cs-fixer` from `^3.59` to `^3.75`
-- The CI "highest dependencies" leg now always runs `composer update` instead of
-  `composer install` on PHP 8.1+. A single lock file cannot satisfy PHP 7.4 and
-  PHP 8.5 at the same time, and `composer.lock` is not committed to this
-  repository, so `composer install` had no lock file to install from.
-- `phpunit.xml.dist` migrated to the PHPUnit 10.5 schema (`<source>` instead of
-  `<coverage><include>`, `cacheDirectory` instead of `cacheResultFile`). PHPUnit
-  11 and 12 reject the old elements outright.
-- The PHP 7.4 and 8.0 CI legs now run `composer test` rather than
-  `composer test-coverage`, since PHPUnit 9.6 does not understand the new
-  `<source>` element and would have no coverage filter. Coverage is still
-  collected and uploaded from PHP 8.1 upward.
+- The CI "highest dependencies" leg now always runs `composer update` instead of `composer install` on PHP 8.1+. A single lock file cannot satisfy PHP 7.4 and PHP 8.5 at the same time, and `composer.lock` is not committed to this repository, so `composer install` had no lock file to install from.
+- `phpunit.xml.dist` migrated to the PHPUnit 10.5 schema (`<source>` instead of `<coverage><include>`, `cacheDirectory` instead of `cacheResultFile`). PHPUnit 11 and 12 reject the old elements outright.
+- The PHP 7.4 and 8.0 CI legs now run `composer test` rather than `composer test-coverage`, since PHPUnit 9.6 does not understand the new `<source>` element and would have no coverage filter. Coverage is still collected and uploaded from PHP 8.1 upward.
 
 ### Fixed
-- **Half the test suite was silently not running.** `phpunit.xml.dist` declared
-  two overlapping suites — `default` pointing at `tests` and `unit` pointing at
-  `tests/Unit`, which `tests` already contains. PHPUnit 10 executed both, so the
-  reported "94 tests" was the 47 real tests counted twice; PHPUnit 12 refuses
-  the overlap and skipped the second suite entirely. The redundant `default`
-  suite has been removed, leaving a single `unit` suite that runs all 47 tests
-  once.
+- **Half the test suite was silently not running.** `phpunit.xml.dist` declared two overlapping suites — `default` pointing at `tests` and `unit` pointing at `tests/Unit`, which `tests` already contains. PHPUnit 10 executed both, so the reported "94 tests" was the 47 real tests counted twice; PHPUnit 12 refuses the overlap and skipped the second suite entirely. The redundant `default` suite has been removed, leaving a single `unit` suite that runs all 47 tests once.
 
 ### Notes
-- `phpstan/phpstan` stays on `^1.12`, which runs correctly on PHP 8.5. PHPStan 2
-  infers `mixed` out of `json_decode()` more precisely and reports 27 pre-existing
-  type-safety findings in `src/Http/HttpClient.php` and the DTO `fromArray()`
-  methods. Those are unrelated to PHP 8.5 and are left for a separate change.
-- PHPUnit 12 emits 6 advisory notices suggesting `createStub()` over
-  `createMock()` in `HttpClientTest`. The suggested fix relies on attributes that
-  do not exist in PHPUnit 9.6, so it is deferred while PHP 7.4 is supported.
-- The PHP-CS-Fixer rule set is still spelled `@PHP74Migration`. Recent 3.9x
-  releases renamed it to `@PHP7x4Migration` and deprecate the old name, but the
-  new spelling does not exist in the versions the `--prefer-lowest` CI leg
-  installs, so the old name is kept until the floor is raised.
+- `phpstan/phpstan` stays on `^1.12`, which runs correctly on PHP 8.5. PHPStan 2 infers `mixed` out of `json_decode()` more precisely and reports 27 pre-existing type-safety findings in `src/Http/HttpClient.php` and the DTO `fromArray()` methods. Those are unrelated to PHP 8.5 and are left for a separate change.
+- PHPUnit 12 emits 6 advisory notices suggesting `createStub()` over `createMock()` in `HttpClientTest`. The suggested fix relies on attributes that do not exist in PHPUnit 9.6, so it is deferred while PHP 7.4 is supported.
+- The PHP-CS-Fixer rule set is still spelled `@PHP74Migration`. Recent 3.9x releases renamed it to `@PHP7x4Migration` and deprecate the old name, but the new spelling does not exist in the versions the `--prefer-lowest` CI leg installs, so the old name is kept until the floor is raised.
 
 ## [2.1.1] - 2025-11-09
 

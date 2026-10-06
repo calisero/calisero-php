@@ -915,7 +915,8 @@ The library uses an optimized cURL-based HTTP client internally, providing excel
 `SmsClient::create()` sends every request to `https://rest.calisero.ro/api/v1` with
 a 30-second timeout (10 seconds to connect), authenticates with the API key you
 pass, and adds a random UUID `Idempotency-Key` header to each message and
-verification it creates.
+verification it creates. Every request names the library, PHP and the platform in
+its `User-Agent` header, e.g. `Calisero-SMS-PHP/2.3.1 (PHP 8.5.3; linux x86_64)`.
 
 ### Building the Client Yourself
 
