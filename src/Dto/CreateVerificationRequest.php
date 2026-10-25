@@ -27,11 +27,21 @@ class CreateVerificationRequest
         return $this->phone;
     }
 
+    /**
+     * The brand named in the default message, at most 120 characters: required
+     * unless a template is given. It may not contain links (web addresses,
+     * domains, emails or IP addresses).
+     */
     public function getBrand(): ?string
     {
         return $this->brand;
     }
 
+    /**
+     * A custom message, at most 600 characters, that must hold {code}. It may not
+     * contain links (web addresses, domains, emails or IP addresses): the code is
+     * sent from a shared sender.
+     */
     public function getTemplate(): ?string
     {
         return $this->template;

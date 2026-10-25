@@ -12,6 +12,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Documentation
 - `README.md` describes the `User-Agent` header under Advanced Configuration.
 
+## [2.3.1] - 2026-10-25
+
+Support for version 1.0.15 of the Calisero API. The API added validation rules
+but no field or endpoint, so the library's code and public API are unchanged;
+only the version in the `User-Agent` header moves to 2.3.1.
+
+### Added
+- `resources/openApi/api-v1.json`: the API's 1.0.15 OpenAPI document, which
+  now describes the delivery webhook as the `deliveryStatus` callback of
+  `POST /messages` and gives an example answer for `PUT /opt-outs/{id}`.
+- `OpenApiContractTest` checks the library against that document: every field of
+  the requests is sent, every example answer is read, the documented webhook and
+  each of its statuses are accepted, the documented daily limit refusals are
+  reported. 104 tests, up from 89.
+
+### Documentation
+- `AGENTS.md`: guidance for AI coding agents, both for integrating Calisero into
+  an application with this library (configuration, sending, OTP, statuses, the
+  delivery webhook, errors and trace IDs, sandbox keys, the pitfalls of the API)
+  and for working on the library.
+- The validation rules of API 1.0.15, in `README.md` and in the docblocks of
+  `CreateMessageRequest` and `CreateVerificationRequest` (shown by editors):
+  - `callbackUrl` must be an http or https address on the public Internet:
+    private, loopback and link-local addresses are refused, and redirects are
+    not followed. The webhook section explains how to receive callbacks on a
+    development machine.
+  - `sender` must be a sender approved for the account, written exactly as
+    approved (case-sensitive); any other is refused with a
+    `ValidationException` ("The sender is invalid or is not approved.") and
+    nothing is sent.
+  - The `brand` and the `template` of a verification may not contain links
+    (web addresses, domains, emails or IP addresses).
+- `TESTING.md` describes the contract tests.
+
 ## [2.3.0] - 2026-10-05
 
 Support for version 1.0.14 of the Calisero API. Only constructors gained parameters, all optional and last; no other public method changed its signature. Behavior changes are listed under Changed and Fixed.

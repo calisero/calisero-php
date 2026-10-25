@@ -63,11 +63,21 @@ class CreateMessageRequest
         return $this->scheduleAt;
     }
 
+    /**
+     * The URL Calisero posts the message's delivery status updates to: an http or
+     * https address on the public Internet. Private, loopback and link-local
+     * addresses are refused, and redirects are not followed.
+     */
     public function getCallbackUrl(): ?string
     {
         return $this->callbackUrl;
     }
 
+    /**
+     * One of the account's approved sender IDs, written exactly as approved (the
+     * match is case-sensitive); null for the default sender. A sender that is
+     * unknown or not approved yet is refused with a 422 and nothing is sent.
+     */
     public function getSender(): ?string
     {
         return $this->sender;
