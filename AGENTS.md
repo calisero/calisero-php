@@ -179,8 +179,11 @@ everything that happened to that request.
   midnight, Romania time, `getResetsAt()`). Created messages and verifications report `X-Daily-Limit` /
   `X-Daily-Remaining` in `getResponseMeta()`.
 - **No idempotency key**: the API takes none yet. `SmsClient::create()` adds an `Idempotency-Key` header to every
-  create, but it does not make a retry safe. The library never retries; do not retry `messages()->create()` blindly
+  message and verification it creates, but it does not make a retry safe. The library never retries; do not retry `messages()->create()` blindly
   after a timeout or a `TransportException`: the SMS may have been sent and billed. Check `messages()->list()` first.
+- **TLS**: the API accepts TLS 1.2 and 1.3 only (TLS 1.0 and 1.1 are refused from 1 November 2026, with no HTTP
+  answer). The library never offers less than TLS 1.2; keep the `https://` base URL, since `http://` is redirected and
+  the library does not follow redirects.
 - **OTP**: `brand` or a `template` holding `{code}`, neither with links. Each code is a billed SMS that counts towards
   the daily limit: rate-limit resends in your application.
 

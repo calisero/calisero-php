@@ -4,7 +4,7 @@ The library's unit tests live in `tests/Unit` and run with PHPUnit. They make no
 network requests: the services run against a mocked `HttpClient`, and the HTTP
 layer against stub transports and real `Request` and `Response` objects.
 
-As of 2.3.1 the suite has **104 tests in 17 test classes**. PHPUnit counts
+As of 2.3.2 the suite has **104 tests in 17 test classes**. PHPUnit counts
 assertions differently from one version to the next: 535 on PHPUnit 12.5, 477 on
 PHPUnit 9.6.
 
