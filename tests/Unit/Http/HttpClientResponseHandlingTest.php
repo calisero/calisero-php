@@ -252,14 +252,20 @@ class HttpClientResponseHandlingTest extends TestCase
         }
     }
 
-    public function testUserAgentNamesTheLibraryVersion(): void
+    public function testUserAgentNamesTheLibraryPhpAndThePlatform(): void
     {
         $client = $this->clientAnswering(new Response(200, [], '{"data":[]}'));
 
         $client->get('/messages');
 
+        // Like the Node.js library's: Calisero-SMS-Node/1.0.0 (Node.js v24.21.0; linux x64)
         $headers = $this->transport->requests[0]->getHeaders();
-        $this->assertSame(['Calisero-SMS-PHP/' . SmsClient::VERSION], $headers['User-Agent']);
+        $this->assertCount(1, $headers['User-Agent']);
+        $this->assertMatchesRegularExpression(
+            '/^Calisero-SMS-PHP\/' . \preg_quote(SmsClient::VERSION, '/')
+            . ' \(PHP ' . \preg_quote(\PHP_VERSION, '/') . '; ' . \strtolower(\PHP_OS_FAMILY) . '( [a-z0-9_]+)?\)$/',
+            $headers['User-Agent'][0]
+        );
     }
 
     /**
