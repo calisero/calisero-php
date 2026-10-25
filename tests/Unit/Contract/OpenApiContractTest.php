@@ -40,7 +40,7 @@ class OpenApiContractTest extends TestCase
 
     public function testTheDocumentIsTheOneOfTheSupportedApiVersion(): void
     {
-        $this->assertStringStartsWith('1.0.15', self::string(self::path(self::document(), 'info', 'version')));
+        $this->assertStringStartsWith('1.0.16', self::string(self::path(self::document(), 'info', 'version')));
     }
 
     public function testEveryFieldOfAMessageIsSentAndTheAnswerIsRead(): void

@@ -933,7 +933,14 @@ The library uses an optimized cURL-based HTTP client internally, providing excel
 a 30-second timeout (10 seconds to connect), authenticates with the API key you
 pass, and adds a random UUID `Idempotency-Key` header to each message and
 verification it creates. Every request names the library, PHP and the platform in
-its `User-Agent` header, e.g. `Calisero-SMS-PHP/2.3.1 (PHP 8.5.3; linux x86_64)`.
+its `User-Agent` header, e.g. `Calisero-SMS-PHP/2.3.2 (PHP 8.5.3; linux x86_64)`.
+
+The API accepts TLS 1.2 and TLS 1.3 only: from 1 November 2026 a connection that
+offers only TLS 1.0 or 1.1 is refused during the handshake, before any request is
+read. The library never offers less than TLS 1.2, so it needs a cURL built with an
+SSL library that supports it (any OpenSSL from 1.0.1 on). If you build the client
+yourself, keep the `https://` base URL: a request to `http://` is redirected, and
+the library does not follow redirects.
 
 ### Building the Client Yourself
 
