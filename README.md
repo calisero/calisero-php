@@ -228,6 +228,14 @@ echo "Advanced message created with ID: " . $response->getData()->getId() . "\n"
 > constructor's order: `recipient`, `body`, `visibleBody`, `validity`, `scheduleAt`,
 > `callbackUrl`, `sender`, `shortenUrls` (use `null` for the ones you skip).
 
+`sender` must be one of the senders approved for your account (Messages > Senders
+in the dashboard), written exactly as approved: the match is case-sensitive. A
+sender that is unknown or not approved yet is refused with a `ValidationException`
+("The sender is invalid or is not approved.") and nothing is sent; leave it out
+for the default sender. `callbackUrl` must be an http or https address on the
+public Internet: private, loopback and link-local addresses are refused, and
+redirects are not followed.
+
 ## Authentication
 
 ### Using API Key (Bearer Token)
@@ -495,6 +503,10 @@ echo $verification->getStatus();   // 'unverified' or 'verified'
 echo $response->getResponseMeta()->getDailyRemaining(); // Messages left today (null: no daily limit)
 ```
 
+The code is sent from a shared sender, so neither the brand nor a custom template
+(which must hold `{code}`) may contain links (web addresses, domains, emails or IP
+addresses): the API refuses them with a `ValidationException`.
+
 #### Get Verification Details
 
 ```php
@@ -704,6 +716,11 @@ Only a failed connection or an answer slower than 2 seconds is retried (at most 
 attempts in total); a non-2xx answer is not. Keep the endpoint fast: record the
 status or queue a job, then answer. In a framework, pass the decoded request body
 to `DeliveryWebhookMessage::fromArray()` instead.
+
+The callback URL must be reachable from the Internet: the API refuses private,
+loopback and link-local addresses (`localhost`, `192.168.x.x`…) and does not follow
+redirects. To receive callbacks on a development machine, expose the endpoint
+through a public tunnel and use its URL.
 
 ## Daily Sending Limit
 

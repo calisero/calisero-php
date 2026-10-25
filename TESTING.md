@@ -4,8 +4,8 @@ The library's unit tests live in `tests/Unit` and run with PHPUnit. They make no
 network requests: the services run against a mocked `HttpClient`, and the HTTP
 layer against stub transports and real `Request` and `Response` objects.
 
-As of 2.3.0 the suite has **89 tests in 16 test classes**. PHPUnit counts
-assertions differently from one version to the next: 501 on PHPUnit 12.5, 443 on
+As of 2.3.1 the suite has **104 tests in 17 test classes**. PHPUnit counts
+assertions differently from one version to the next: 535 on PHPUnit 12.5, 477 on
 PHPUnit 9.6.
 
 ## Running the Tests
@@ -81,6 +81,16 @@ makes a real request. Check changes to it by hand, for instance against a local
 | `ResponseMetaTest` | 5 | Reading the trace ID, rate limit and daily limit headers; names in any case; an account without a daily limit; values that are not numbers; no response at all |
 | `CreateMessageResponseTest` | 2 | `withResponseMeta()` returns a copy; `fromArray()` of both create responses keeps the one-parameter signature that subclasses override |
 | `DeliveryWebhookMessageTest` | 8 | `fromJson()` and `fromArray()` with a full payload, a minimal one, one that predates the daily limit and a price sent as a string; refusing invalid JSON, JSON that is not an object, a missing `messageId` and a missing price |
+
+### Contract (`tests/Unit/Contract`)
+
+| Test class | Tests | Covers |
+|---|---|---|
+| `OpenApiContractTest` | 15 | The library against the API's OpenAPI document, `resources/openApi/api-v1.json`: the document's version; every field of the message, verification, verification check and opt-out requests is sent; every example answer of the document (message, verification, opt-out and account, single and listed) is read; the documented delivery webhook and each of its statuses; the documented daily limit refusals of a message and of a verification |
+
+The services run on a real `HttpClient` over a stub transport that answers with
+the document's examples. When the API changes, replace the document and update
+the version the first test expects: the failures show what the library lacks.
 
 ### Client and Helpers
 
