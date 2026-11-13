@@ -76,7 +76,8 @@ class CreateMessageRequest
     /**
      * One of the account's approved sender IDs, written exactly as approved (the
      * match is case-sensitive); null for the default sender. A sender that is
-     * unknown or not approved yet is refused with a 422 and nothing is sent.
+     * unknown, still pending, rejected or another account's is refused with a 422
+     * on the `sender` field, and nothing is sent or billed.
      */
     public function getSender(): ?string
     {
@@ -86,6 +87,8 @@ class CreateMessageRequest
     /**
      * Whether the URLs of the body are shortened (and returned in the message's
      * shortened URLs); null leaves it to the API, which does not shorten them.
+     * Test messages (a sandbox account or a sandbox API key) keep their URLs as
+     * written and come back with no shortened URLs.
      */
     public function getShortenUrls(): ?bool
     {

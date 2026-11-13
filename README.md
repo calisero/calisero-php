@@ -33,7 +33,7 @@ Send SMS messages, manage opt-outs for GDPR compliance, and monitor your account
 
 - PHP 7.4 or higher — tested on **7.4, 8.0, 8.1, 8.2, 8.3, 8.4 and 8.5**
 - `ext-json` extension
-- `ext-curl` extension
+- `ext-curl` extension, with TLS 1.2 support (see [TLS](#tls))
 
 The library carries no runtime dependencies beyond those extensions, so it drops
 into any supported PHP version without a resolver conflict.
@@ -230,11 +230,12 @@ echo "Advanced message created with ID: " . $response->getData()->getId() . "\n"
 
 `sender` must be one of the senders approved for your account (Messages > Senders
 in the dashboard), written exactly as approved: the match is case-sensitive. A
-sender that is unknown or not approved yet is refused with a `ValidationException`
-("The sender is invalid or is not approved.") and nothing is sent; leave it out
-for the default sender. `callbackUrl` must be an http or https address on the
-public Internet: private, loopback and link-local addresses are refused, and
-redirects are not followed.
+sender that is unknown, still pending, rejected or another account's is refused
+with a `ValidationException` ("The sender is invalid or is not approved." in
+`getValidationErrors()['sender']`) and nothing is sent or billed; leave it out for
+the default sender until yours is approved. `callbackUrl` must be an http or https
+address on the public Internet: private, loopback and link-local addresses are
+refused, and redirects are not followed.
 
 ## Authentication
 
@@ -402,7 +403,9 @@ foreach ($message->getShortenedUrls() as $link) {
 ```
 
 Links are not shortened unless you ask: leave `shortenUrls` out (or pass `false`)
-and the body is sent as written.
+and the body is sent as written. Test messages (a sandbox account or a sandbox API
+key) keep their links as written too, and `getShortenedUrls()` returns an empty
+array for them.
 
 #### Get Message Details
 
@@ -572,9 +575,16 @@ $request = new VerificationCheckRequest(
 $response = $client->verifications()->validate($request);
 $verification = $response->getData();
 
-echo $verification->getStatus();     // 'verified' (idempotent if already verified)
+echo $verification->getStatus();     // 'verified'
 echo $verification->getVerifiedAt(); // When it was verified
 ```
+
+A code validates only once: sent again, it is refused with a `ValidationException`
+("The validation code has already been used."), so record the verification in your
+application instead of checking the code a second time, e.g. on a resubmitted
+form. A wrong or expired code, a code already used, or too many attempts throws a
+`ValidationException` whose `getValidationErrors()['code']` says which; a phone
+number without a verification a `NotFoundException`.
 
 ### Opt-outs
 
@@ -933,7 +943,21 @@ The library uses an optimized cURL-based HTTP client internally, providing excel
 a 30-second timeout (10 seconds to connect), authenticates with the API key you
 pass, and adds a random UUID `Idempotency-Key` header to each message and
 verification it creates. Every request names the library, PHP and the platform in
-its `User-Agent` header, e.g. `Calisero-SMS-PHP/2.3.1 (PHP 8.5.3; linux x86_64)`.
+its `User-Agent` header, e.g. `Calisero-SMS-PHP/2.3.2 (PHP 8.5.3; linux x86_64)`.
+
+### TLS
+
+The API accepts HTTPS connections with TLS 1.2 or TLS 1.3 only: since 1 November
+2026, a client that offers only TLS 1.0 or 1.1 is refused during the TLS handshake,
+with no HTTP answer, and nothing is sent or billed. The library's cURL client never
+offers less than TLS 1.2, so PHP's cURL must be built with an SSL library that
+supports it, as any OpenSSL from 1.0.1 on does. A handshake that fails throws a
+`TransportException`.
+
+Keep the base URL on `https://`: the API redirects `http://` to `https://`, and the
+library follows no redirect (most HTTP clients would turn the redirected `POST`
+into a `GET` without its body), so a request to `http://` throws an `ApiException`
+with the `3xx` status and nothing is sent.
 
 ### Building the Client Yourself
 

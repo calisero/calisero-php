@@ -4,6 +4,81 @@ All notable changes to `calisero-php` will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2026-11-13
+
+Support for versions 1.0.15, 1.0.16 and 1.0.17 of the Calisero API. The API added
+validation rules and a TLS requirement but no field or endpoint, so the library's
+public API is unchanged and upgrading needs no code change. Two changes reach an
+application, though: the cURL client never offers less than TLS 1.2, and a
+verification code validates only once.
+
+### Added
+- `resources/openApi/api-v1.json`: the API's 1.0.17 OpenAPI document. It describes
+  the delivery webhook as the `deliveryStatus` callback of `POST /messages`, gives
+  an example answer for `PUT /opt-outs/{id}`, states the TLS requirement,
+  documents the refusal of a sender that is not approved as the 422 of
+  `POST /messages`, and adds the code already used to the 422s of
+  `PUT /verifications/validate`.
+- `OpenApiContractTest` checks the library against that document: every field of
+  the requests is sent, every example answer is read, the documented webhook and
+  each of its statuses are accepted, the documented refusals (a sender that is not
+  approved, each refused verification code, the daily limit of a message and of a
+  verification) are reported as their exceptions. 107 tests, up from 89.
+
+### Changed
+- **TLS 1.2 at least.** `BaseHttpClient` sets `CURLOPT_SSLVERSION` to
+  `CURL_SSLVERSION_TLSv1_2`, so cURL never offers less than TLS 1.2 (libcurl
+  before 7.54 offers TLS 1.2 exactly): since 1 November 2026 the API refuses
+  TLS 1.0 and 1.1 during the handshake, with no HTTP answer, and nothing is sent.
+  PHP's cURL must be built with an SSL library that supports TLS 1.2, as any
+  OpenSSL from 1.0.1 on does; a cURL that cannot use it throws a
+  `TransportException` before anything is sent.
+- **A verification code validates only once** (API 1.0.17).
+  `verifications()->validate()` used to succeed again for a code already
+  verified; the API now refuses it with a 422, which the library throws as a
+  `ValidationException` ("The validation code has already been used." in
+  `getValidationErrors()['code']`). An application that validated the same code
+  twice, e.g. on a resubmitted form, must record the first success itself.
+- `examples/messages/send_advanced_sms.php` and `send_bulk_sms.php` read the
+  sender ID from `CALISERO_SENDER`, and send under the default sender without it.
+  They used `Calisero`, a placeholder that the API refuses for any account it is
+  not approved for. `examples/verifications/validate_verification.php` no longer
+  suggests that a code may be validated again.
+
+### Fixed
+- `CHANGELOG.md` had two `[2.3.1]` entries: the support for API 1.0.15 came after
+  the 2.3.1 release (the `User-Agent` change) and was never released under that
+  number. It is part of this release, and `SmsClient::VERSION` moves to `2.3.2`.
+
+### Documentation
+- `AGENTS.md`: guidance for AI coding agents, both for integrating Calisero into
+  an application with this library (configuration, sending, OTP, statuses, the
+  delivery webhook, errors and trace IDs, sandbox keys, TLS, the pitfalls of the
+  API) and for working on the library.
+- The validation rules of the API, in `README.md` and in the docblocks of
+  `CreateMessageRequest`, `CreateVerificationRequest`, `Message` and
+  `VerificationService::validate()` (shown by editors):
+  - `callbackUrl` must be an http or https address on the public Internet:
+    private, loopback and link-local addresses are refused, and redirects are
+    not followed. The webhook section explains how to receive callbacks on a
+    development machine.
+  - `sender` must be a sender approved for the account, written exactly as
+    approved (case-sensitive); one that is unknown, still pending, rejected or
+    another account's is refused with a `ValidationException` ("The sender is
+    invalid or is not approved." in `getValidationErrors()['sender']`) and
+    nothing is sent or billed.
+  - The `brand` and the `template` of a verification may not contain links
+    (web addresses, domains, emails or IP addresses).
+  - A verification code validates only once.
+  - Test messages (a sandbox account or a sandbox API key) keep their links as
+    written: `getShortenedUrls()` is empty for them.
+- `README.md`: a new TLS section (TLS 1.2 or 1.3 only, and why the base URL must
+  stay `https://`: the library follows no redirect, so `http://` fails with an
+  `ApiException` carrying the `3xx`), and the requirements name TLS 1.2 support
+  in `ext-curl`.
+- `examples/README.md`: the `CALISERO_SENDER` variable.
+- `TESTING.md` describes the contract tests.
+
 ## [2.3.1] - 2026-10-06
 
 ### Changed
@@ -11,40 +86,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Documentation
 - `README.md` describes the `User-Agent` header under Advanced Configuration.
-
-## [2.3.1] - 2026-10-25
-
-Support for version 1.0.15 of the Calisero API. The API added validation rules
-but no field or endpoint, so the library's code and public API are unchanged;
-only the version in the `User-Agent` header moves to 2.3.1.
-
-### Added
-- `resources/openApi/api-v1.json`: the API's 1.0.15 OpenAPI document, which
-  now describes the delivery webhook as the `deliveryStatus` callback of
-  `POST /messages` and gives an example answer for `PUT /opt-outs/{id}`.
-- `OpenApiContractTest` checks the library against that document: every field of
-  the requests is sent, every example answer is read, the documented webhook and
-  each of its statuses are accepted, the documented daily limit refusals are
-  reported. 104 tests, up from 89.
-
-### Documentation
-- `AGENTS.md`: guidance for AI coding agents, both for integrating Calisero into
-  an application with this library (configuration, sending, OTP, statuses, the
-  delivery webhook, errors and trace IDs, sandbox keys, the pitfalls of the API)
-  and for working on the library.
-- The validation rules of API 1.0.15, in `README.md` and in the docblocks of
-  `CreateMessageRequest` and `CreateVerificationRequest` (shown by editors):
-  - `callbackUrl` must be an http or https address on the public Internet:
-    private, loopback and link-local addresses are refused, and redirects are
-    not followed. The webhook section explains how to receive callbacks on a
-    development machine.
-  - `sender` must be a sender approved for the account, written exactly as
-    approved (case-sensitive); any other is refused with a
-    `ValidationException` ("The sender is invalid or is not approved.") and
-    nothing is sent.
-  - The `brand` and the `template` of a verification may not contain links
-    (web addresses, domains, emails or IP addresses).
-- `TESTING.md` describes the contract tests.
 
 ## [2.3.0] - 2026-10-05
 

@@ -45,6 +45,11 @@ examples/
    - `'+40742***350'` with actual phone numbers (keeping the masked format for security)
    - `'acc_1234567890'` with your actual account ID (for account examples)
 
+   `send_advanced_sms.php` and `send_bulk_sms.php` read the sender ID from the
+   `CALISERO_SENDER` environment variable and use the default sender without it. Set
+   it only to a sender approved for your account, written exactly as approved: any
+   other is refused with a 422 and nothing is sent.
+
 3. **Run an example:**
    ```bash
    php examples/messages/send_simple_sms.php

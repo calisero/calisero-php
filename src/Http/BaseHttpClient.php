@@ -66,6 +66,12 @@ class BaseHttpClient implements HttpClientInterface
 
             \curl_setopt_array($curl, $options);
 
+            // The API accepts TLS 1.2 and 1.3 only: never offer less. libcurl 7.54 and
+            // later read this as "TLS 1.2 or later", older ones as "TLS 1.2".
+            if (\defined('CURL_SSLVERSION_TLSv1_2') && !\curl_setopt($curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2)) {
+                throw new ClientException('cURL cannot use TLS 1.2, which the Calisero API requires');
+            }
+
             $response = \curl_exec($curl);
             if ($response === false) {
                 $error = \curl_error($curl);

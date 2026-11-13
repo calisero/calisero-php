@@ -13,6 +13,7 @@ use Calisero\Sms\Dto\DeliveryWebhookMessage;
 use Calisero\Sms\Dto\UpdateOptOutRequest;
 use Calisero\Sms\Dto\VerificationCheckRequest;
 use Calisero\Sms\Exceptions\DailyLimitExceededException;
+use Calisero\Sms\Exceptions\ValidationException;
 use Calisero\Sms\Http\Factory\HttpFactory;
 use Calisero\Sms\Http\HttpClient;
 use Calisero\Sms\Http\RequestInterface;
@@ -40,7 +41,7 @@ class OpenApiContractTest extends TestCase
 
     public function testTheDocumentIsTheOneOfTheSupportedApiVersion(): void
     {
-        $this->assertStringStartsWith('1.0.15', self::string(self::path(self::document(), 'info', 'version')));
+        $this->assertStringStartsWith('1.0.17', self::string(self::path(self::document(), 'info', 'version')));
     }
 
     public function testEveryFieldOfAMessageIsSentAndTheAnswerIsRead(): void
@@ -220,6 +221,41 @@ class OpenApiContractTest extends TestCase
         $this->assertSame($statuses, $read);
     }
 
+    public function testTheDocumentedSenderRefusalOfAMessageIsReported(): void
+    {
+        $example = self::example('/messages', 'post', '422');
+        $messages = new MessageService($this->clientAnswering(422, $example));
+
+        try {
+            $messages->create(new CreateMessageRequest('+40742123456', 'Hello', null, null, null, null, 'NOTAPPROVED'));
+            $this->fail('The documented refusal was not reported.');
+        } catch (ValidationException $e) {
+            $this->assertSame($example['message'], $e->getMessage());
+            $this->assertSame($example['errors'], $e->getValidationErrors());
+            $this->assertArrayHasKey('sender', $e->getValidationErrors());
+            $this->assertSame($example['trace_id'], $e->getTraceId());
+        }
+    }
+
+    public function testEveryDocumentedRefusalOfAVerificationCodeIsReported(): void
+    {
+        $examples = self::examples('/verifications/validate', 'put', '422');
+        $this->assertArrayHasKey('code_already_used', $examples);
+
+        foreach ($examples as $name => $example) {
+            $verifications = new VerificationService($this->clientAnswering(422, $example));
+
+            try {
+                $verifications->validate(new VerificationCheckRequest('+40742123456', 'SBMH0f'));
+                $this->fail(\sprintf('The documented refusal "%s" was not reported.', $name));
+            } catch (ValidationException $e) {
+                $this->assertSame($example['message'], $e->getMessage(), $name);
+                $this->assertSame($example['errors'], $e->getValidationErrors(), $name);
+                $this->assertArrayHasKey('code', $e->getValidationErrors(), $name);
+            }
+        }
+    }
+
     public function testTheDocumentedDailyLimitRefusalOfAMessageIsReported(): void
     {
         $example = self::example('/messages', 'post', '429');
@@ -335,17 +371,47 @@ class OpenApiContractTest extends TestCase
      */
     private static function example(string $path, string $method, string $status): array
     {
-        return self::array(self::path(
-            self::document(),
-            'paths',
-            $path,
-            $method,
-            'responses',
-            $status,
-            'content',
-            'application/json',
-            'example'
-        ));
+        return self::array(self::path(self::response($path, $method, $status), 'content', 'application/json', 'example'));
+    }
+
+    /**
+     * The named example answers the document gives for an operation and a status.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private static function examples(string $path, string $method, string $status): array
+    {
+        $examples = [];
+        $named = self::array(self::path(self::response($path, $method, $status), 'content', 'application/json', 'examples'));
+
+        foreach ($named as $name => $example) {
+            $examples[$name] = self::array(self::path(self::array($example), 'value'));
+        }
+
+        return $examples;
+    }
+
+    /**
+     * The answer the document gives for an operation and a status, its $ref to
+     * #/components/responses followed.
+     *
+     * @return array<string, mixed>
+     */
+    private static function response(string $path, string $method, string $status): array
+    {
+        $response = self::array(self::path(self::document(), 'paths', $path, $method, 'responses', $status));
+
+        if (isset($response['$ref'])) {
+            $ref = self::string($response['$ref']);
+            $prefix = '#/components/responses/';
+            if (\strpos($ref, $prefix) !== 0) {
+                throw new \LogicException(\sprintf('The OpenAPI document refers to "%s", which these tests cannot follow.', $ref));
+            }
+
+            $response = self::array(self::path(self::document(), 'components', 'responses', \substr($ref, \strlen($prefix))));
+        }
+
+        return $response;
     }
 
     /**

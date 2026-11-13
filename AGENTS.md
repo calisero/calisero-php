@@ -85,9 +85,12 @@ try {
     $verification = $client->verifications()->validate(new VerificationCheckRequest($phone, $input))->getData();
     // $verification->getStatus() === 'verified'
 } catch (ValidationException $e) {
-    // wrong or expired code, or too many attempts (422): $e->getMessage() says which
+    // wrong, expired or already used code, or too many attempts (422): $e->getMessage() says which
 }
 ```
+
+A code validates only once: validated again, it is refused ("The validation code has already been used."). Record
+the success in your application (a resubmitted form must not validate the code a second time).
 
 ### Read a message's status
 
@@ -157,7 +160,7 @@ everything that happened to that request.
   `README.md`).
 - Staging and CI against the real API: use a sandbox API key. It goes through the same validation but sends nothing,
   bills nothing and never counts towards the daily limit; the message is `delivered` at once, callbacks still arrive,
-  and a test OTP code shows in the dashboard.
+  and a test OTP code shows in the dashboard. Its links are not shortened: `getShortenedUrls()` is empty.
 
 ### Rules that matter
 
@@ -165,9 +168,11 @@ everything that happened to that request.
 - **Length and cost**: one part holds 160 GSM-7 characters, or 70 when the text has Romanian diacritics (ă, â, î, ș,
   ț) or emoji (UCS-2). A longer text is split into parts, each billed as one SMS (`getParts()`); `body` takes at most
   1600 characters. When cost matters, a text without diacritics keeps 160-character parts: an option, not a rule.
-- **Sender ID**: alphanumeric, at most 11 characters, approved for the account and written exactly as approved;
-  otherwise 422 and nothing is sent. Leave `sender` out for the default sender. It cannot receive replies. Never take
-  it from user input. OTP codes go out from the shared "Verify" sender and need no sender of your own.
+- **Sender ID**: alphanumeric, at most 11 characters, approved for the account and written exactly as approved. One
+  that is unknown, still pending, rejected or another account's is refused with a `ValidationException` on `sender`
+  ("The sender is invalid or is not approved."), and nothing is sent or billed. Leave `sender` out for the default
+  sender. It cannot receive replies. Never take it from user input. OTP codes go out from the shared "Verify" sender
+  and need no sender of your own.
 - **Scheduling**: `scheduleAt` is `Y-m-d H:i:s` in Romania time (Europe/Bucharest); an ISO 8601 string is refused.
 - **Webhooks**: answer any 2xx within 2 seconds, do the work afterwards. Only a timeout or a failed connection is
   retried (at most 5 attempts); a non-2xx answer is not. The same update can arrive twice and out of order: key your
@@ -182,7 +187,11 @@ everything that happened to that request.
   create, but it does not make a retry safe. The library never retries; do not retry `messages()->create()` blindly
   after a timeout or a `TransportException`: the SMS may have been sent and billed. Check `messages()->list()` first.
 - **OTP**: `brand` or a `template` holding `{code}`, neither with links. Each code is a billed SMS that counts towards
-  the daily limit: rate-limit resends in your application.
+  the daily limit: rate-limit resends in your application. A code validates only once.
+- **TLS and `https://`**: the API accepts TLS 1.2 and 1.3 only (since 1 November 2026 an older client is refused
+  during the handshake: a `TransportException`, nothing sent). The library's cURL client never offers less than
+  TLS 1.2, so PHP's cURL needs an SSL library that supports it. Keep the base URL on `https://`: `http://` is
+  redirected, the library follows no redirect, and the request fails with an `ApiException` carrying the `3xx`.
 
 ## Working on this library
 

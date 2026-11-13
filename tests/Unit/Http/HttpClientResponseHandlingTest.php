@@ -6,6 +6,7 @@ namespace Calisero\Sms\Tests\Unit\Http;
 
 use Calisero\Sms\Auth\BearerTokenAuthProvider;
 use Calisero\Sms\Contracts\HttpClientInterface;
+use Calisero\Sms\Exceptions\ApiException;
 use Calisero\Sms\Exceptions\DailyLimitExceededException;
 use Calisero\Sms\Exceptions\NotFoundException;
 use Calisero\Sms\Exceptions\RateLimitedException;
@@ -93,6 +94,22 @@ class HttpClientResponseHandlingTest extends TestCase
             $this->assertSame(502, $e->getStatusCode());
             $this->assertNull($e->getTraceId());
             $this->assertSame([], $e->getErrorDetails());
+        }
+    }
+
+    public function testRedirectIsReportedAndNotFollowed(): void
+    {
+        // The API redirects http:// to https://; following it would turn a POST into a GET without its body.
+        $client = $this->clientAnswering(new Response(301, ['Location' => ['https://rest.calisero.ro/api/v1/messages']], ''));
+
+        try {
+            $client->post('/messages', ['recipient' => '+40742***350', 'body' => 'Hello'], true);
+            $this->fail('Expected ApiException was not thrown');
+        } catch (ApiException $e) {
+            $this->assertSame(ApiException::class, \get_class($e));
+            $this->assertSame('HTTP error 301', $e->getMessage());
+            $this->assertSame(301, $e->getStatusCode());
+            $this->assertCount(1, $this->transport->requests);
         }
     }
 

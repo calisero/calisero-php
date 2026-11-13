@@ -4,8 +4,8 @@ The library's unit tests live in `tests/Unit` and run with PHPUnit. They make no
 network requests: the services run against a mocked `HttpClient`, and the HTTP
 layer against stub transports and real `Request` and `Response` objects.
 
-As of 2.3.1 the suite has **104 tests in 17 test classes**. PHPUnit counts
-assertions differently from one version to the next: 535 on PHPUnit 12.5, 477 on
+As of 2.3.2 the suite has **107 tests in 17 test classes**. PHPUnit counts
+assertions differently from one version to the next: 557 on PHPUnit 12.5, 499 on
 PHPUnit 9.6.
 
 ## Running the Tests
@@ -64,12 +64,13 @@ answer's headers, stub `getLastResponse()` with a real
 | Test class | Tests | Covers |
 |---|---|---|
 | `HttpClientTest` | 6 | Building GET and POST requests (URL, headers, JSON body) with a mocked transport, request factory and auth provider, and keeping their response; mapping 400, 401, 404 and 422 answers to exceptions |
-| `HttpClientResponseHandlingTest` | 12 | Real `Request` and `Response` objects through a stub transport, answered as the API answers: the error message and the trace ID (from the header in any spelling, from the error body, from an older `X-Request-ID` header); an error body that is not JSON; 422s with and without field errors; the request rate limit's 429 against the daily sending limit's; `getLastResponse()` after a success, an error and a transport failure; the version in the `User-Agent` header |
+| `HttpClientResponseHandlingTest` | 13 | Real `Request` and `Response` objects through a stub transport, answered as the API answers: the error message and the trace ID (from the header in any spelling, from the error body, from an older `X-Request-ID` header); an error body that is not JSON; a redirect, reported and not followed; 422s with and without field errors; the request rate limit's 429 against the daily sending limit's; `getLastResponse()` after a success, an error and a transport failure; the version in the `User-Agent` header |
 | `ResponseTest` | 3 | Header lookup that ignores the case of names, which cURL reports in mixed case over HTTP/1.1 and in lowercase over HTTP/2 |
 
 `BaseHttpClient`, the cURL transport, has no unit tests, since nothing in the suite
 makes a real request. Check changes to it by hand, for instance against a local
-`php -S` server.
+`php -S` server (over plain HTTP, so the TLS 1.2 minimum it sets is not exercised)
+or with an unauthenticated request to the API, which answers `401`.
 
 ### DTOs (`tests/Unit/Dto`)
 
@@ -86,7 +87,7 @@ makes a real request. Check changes to it by hand, for instance against a local
 
 | Test class | Tests | Covers |
 |---|---|---|
-| `OpenApiContractTest` | 15 | The library against the API's OpenAPI document, `resources/openApi/api-v1.json`: the document's version; every field of the message, verification, verification check and opt-out requests is sent; every example answer of the document (message, verification, opt-out and account, single and listed) is read; the documented delivery webhook and each of its statuses; the documented daily limit refusals of a message and of a verification |
+| `OpenApiContractTest` | 17 | The library against the API's OpenAPI document, `resources/openApi/api-v1.json`: the document's version; every field of the message, verification, verification check and opt-out requests is sent; every example answer of the document (message, verification, opt-out and account, single and listed) is read; the documented delivery webhook and each of its statuses; the documented refusal of a sender that is not approved; each documented refusal of a verification code, the code already used among them; the documented daily limit refusals of a message and of a verification |
 
 The services run on a real `HttpClient` over a stub transport that answers with
 the document's examples. When the API changes, replace the document and update

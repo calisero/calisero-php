@@ -149,7 +149,7 @@ class HttpClient
 
     /**
      * The library, PHP and the platform, as the other Calisero libraries name
-     * theirs: Calisero-SMS-PHP/2.3.1 (PHP 8.5.3; linux x86_64).
+     * theirs: Calisero-SMS-PHP/2.3.2 (PHP 8.5.3; linux x86_64).
      */
     private static function userAgent(): string
     {
