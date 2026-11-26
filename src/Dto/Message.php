@@ -154,7 +154,8 @@ class Message
 
     /**
      * The links of the body Calisero shortened (requested with `shorten_urls`),
-     * with their click statistics; empty when none were.
+     * with their click statistics; empty when none were, as for every test
+     * message (a sandbox account or a sandbox API key).
      *
      * @return ShortenedLink[]
      */

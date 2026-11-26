@@ -28,7 +28,7 @@ try {
         24,                                                                      // validity (hours)
         date('Y-m-d H:i:s', strtotime('+1 hour')),                               // scheduleAt
         'https://yourapp.com/webhooks/sms',                                      // callbackUrl
-        'Calisero',                                                              // sender
+        getenv('CALISERO_SENDER') ?: null,                                       // sender: approved for the account, or null for the default
         true                                                                     // shortenUrls
     );
 

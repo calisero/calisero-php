@@ -4,6 +4,70 @@ All notable changes to `calisero-php` will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.3] - 2026-11-26
+
+Support for version 1.0.17 of the Calisero API, and for its approved link domains.
+The API added validation rules but no field or endpoint, so the library's public
+API is unchanged and upgrading needs no code change. Two changes of the API reach
+an application, though: a verification code validates only once, and an account
+restricted to its approved link domains may link only to them.
+
+### Added
+- `resources/openApi/api-v1.json`: the API's 1.0.17 OpenAPI document. It
+  documents the refusal of a sender that is not approved and of a link to a
+  domain that is not approved as the 422s of `POST /messages`, adds the code
+  already used to the 422s of `PUT /verifications/validate`, and gives the daily
+  limit of a new account (50 messages a day).
+- `OpenApiContractTest` checks the documented refusals too: a sender that is not
+  approved, a link to a domain that is not approved and each refused verification
+  code are reported as a `ValidationException` on their field. 109 tests, up
+  from 104.
+
+### Changed
+- **A verification code validates only once** (API 1.0.17).
+  `verifications()->validate()` used to succeed again for a code already
+  verified; the API now refuses it with a 422, which the library throws as a
+  `ValidationException` ("The validation code has already been used." in
+  `getValidationErrors()['code']`). An application that validated the same code
+  twice, e.g. on a resubmitted form, must record the first success itself.
+- **Approved link domains.** On an account restricted to its approved link
+  domains (Messages > Link domains in the dashboard), every link in the body of a
+  message, with or without `https://`, must go to one of them. The API refuses
+  any other with a 422, which the library throws as a `ValidationException`
+  whose `getValidationErrors()['body']` names the domain; nothing is sent or
+  billed, with a sandbox API key too. A scheduled message whose domain is
+  rejected or revoked before it is due fails with the error code 1005. An
+  account without the restriction is not affected.
+- A cURL that cannot use TLS 1.2 throws a `TransportException` before anything
+  is sent: `BaseHttpClient` checks that `CURLOPT_SSLVERSION` was accepted
+  (libcurl before 7.54 offers TLS 1.2 exactly, later ones TLS 1.2 or later).
+- `examples/messages/send_advanced_sms.php` and `send_bulk_sms.php` read the
+  sender ID from `CALISERO_SENDER`, and send under the default sender without it.
+  They used `Calisero`, a placeholder that the API refuses for any account it is
+  not approved for. `examples/verifications/validate_verification.php` no longer
+  suggests that a code may be validated again.
+
+### Documentation
+- `README.md`, `AGENTS.md` and the docblocks of `CreateMessageRequest`, `Message`
+  and `VerificationService::validate()` (shown by editors):
+  - On an account restricted to its approved link domains, a link to any other
+    domain in the body of a message is refused with a `ValidationException` on
+    `body`.
+  - A sender that is unknown, still pending, rejected or another account's is
+    refused with a `ValidationException` ("The sender is invalid or is not
+    approved." in `getValidationErrors()['sender']`) and nothing is sent or
+    billed.
+  - A verification code validates only once.
+  - A new account starts with a daily sending limit of 50 messages.
+  - Test messages (a sandbox account or a sandbox API key) keep their links as
+    written: `getShortenedUrls()` is empty for them.
+- `README.md`: TLS has its own section (TLS 1.2 or 1.3 only, and why the base URL
+  must stay `https://`: the library follows no redirect, so `http://` fails with
+  an `ApiException` carrying the `3xx`), and the requirements name TLS 1.2
+  support in `ext-curl`.
+- `examples/README.md`: the `CALISERO_SENDER` variable.
+- `TESTING.md`: the new contract tests.
+
 ## [2.3.2] - 2026-10-25
 
 Support for versions 1.0.15 and 1.0.16 of the Calisero API. The API added validation rules and a TLS requirement but no field or endpoint, so the library's public API is unchanged.

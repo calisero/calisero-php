@@ -65,6 +65,10 @@ class VerificationService
 
     /**
      * Validate a verification code (OTP) for a phone number.
+     *
+     * A code validates only once: sent again, it is refused like a wrong one. A
+     * wrong, expired or already used code, or too many attempts, throws a
+     * ValidationException whose getValidationErrors()['code'] says which.
      */
     public function validate(VerificationCheckRequest $request): GetVerificationResponse
     {

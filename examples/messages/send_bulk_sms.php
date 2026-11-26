@@ -30,7 +30,8 @@ try {
     ];
 
     $messageBody = 'Important announcement: Our office will be closed tomorrow for maintenance. Thank you for your understanding.';
-    $sender = 'Calisero';
+    // A sender approved for your account, written exactly as approved, or null for the default sender
+    $sender = getenv('CALISERO_SENDER') ?: null;
     $callbackUrl = 'https://yourapp.com/webhooks/bulk-sms';
 
     // Create client once for bulk operations

@@ -35,9 +35,10 @@ try {
     echo "✅ Verification validated successfully!\n";
     echo "📱 Phone: {$verification->getPhone()}\n";
     echo "📊 Status: {$verification->getStatus()}\n";
-    echo '✅ Verified at: ' . ($verification->getVerifiedAt() ?? 'Just verified / already verified') . "\n";
+    echo '✅ Verified at: ' . ($verification->getVerifiedAt() ?? 'just now') . "\n";
     echo "🧪 Attempts used: {$verification->getAttempts()}\n";
 } catch (ValidationException $e) {
+    // A wrong or expired code, a code already used (a code validates only once), or too many attempts
     echo "❌ Validation failed: {$e->getMessage()}\n";
 
     $errors = method_exists($e, 'getValidationErrors') ? $e->getValidationErrors() : null;
