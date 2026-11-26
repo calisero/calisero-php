@@ -237,6 +237,17 @@ the default sender until yours is approved. `callbackUrl` must be an http or htt
 address on the public Internet: private, loopback and link-local addresses are
 refused, and redirects are not followed.
 
+**Links in the body.** An account restricted to its approved link domains
+(Messages > Link domains in the dashboard) may link only to them: every link in
+`body`, with or without `https://` (`www.example.ro`, `example.ro/path`), must go
+to an approved domain, exactly, or to one of its subdomains when they were approved
+too. Any other link is refused with a `ValidationException` whose
+`getValidationErrors()['body']` names the domain ("Links to example.net are not
+allowed for this account: it is not one of its approved link domains."): nothing
+is sent or billed, with a sandbox API key too. Links that Calisero shortens are
+checked by the address they open. A scheduled message whose domain is rejected or
+revoked before it is due is not sent: it fails with the error code 1005.
+
 ## Authentication
 
 ### Using API Key (Bearer Token)
@@ -735,8 +746,8 @@ through a public tunnel and use its URL.
 ## Daily Sending Limit
 
 Every account has its own daily sending limit: how many messages it can send in a
-day. A new account starts with a default limit and keeps it until Calisero raises
-it on request.
+day. A new account starts with 50 messages a day and keeps that limit until Calisero
+raises it on request.
 
 - Every real message counts once, whatever its number of parts: the messages of
   `messages()->create()` and the OTP codes of `verifications()->create()` alike.
@@ -943,7 +954,7 @@ The library uses an optimized cURL-based HTTP client internally, providing excel
 a 30-second timeout (10 seconds to connect), authenticates with the API key you
 pass, and adds a random UUID `Idempotency-Key` header to each message and
 verification it creates. Every request names the library, PHP and the platform in
-its `User-Agent` header, e.g. `Calisero-SMS-PHP/2.3.2 (PHP 8.5.3; linux x86_64)`.
+its `User-Agent` header, e.g. `Calisero-SMS-PHP/2.3.3 (PHP 8.5.3; linux x86_64)`.
 
 ### TLS
 

@@ -223,7 +223,7 @@ class OpenApiContractTest extends TestCase
 
     public function testTheDocumentedSenderRefusalOfAMessageIsReported(): void
     {
-        $example = self::example('/messages', 'post', '422');
+        $example = self::examples('/messages', 'post', '422')['sender_not_approved'];
         $messages = new MessageService($this->clientAnswering(422, $example));
 
         try {
@@ -235,6 +235,30 @@ class OpenApiContractTest extends TestCase
             $this->assertArrayHasKey('sender', $e->getValidationErrors());
             $this->assertSame($example['trace_id'], $e->getTraceId());
         }
+    }
+
+    public function testTheDocumentedLinkDomainRefusalOfAMessageIsReported(): void
+    {
+        $example = self::examples('/messages', 'post', '422')['link_domain_not_approved'];
+        $messages = new MessageService($this->clientAnswering(422, $example));
+
+        try {
+            $messages->create(new CreateMessageRequest('+40742123456', 'Hello https://not-approved.example.test'));
+            $this->fail('The documented refusal was not reported.');
+        } catch (ValidationException $e) {
+            $this->assertSame($example['message'], $e->getMessage());
+            $this->assertSame($example['errors'], $e->getValidationErrors());
+            $this->assertArrayHasKey('body', $e->getValidationErrors());
+            $this->assertSame($example['trace_id'], $e->getTraceId());
+        }
+    }
+
+    public function testEveryDocumentedRefusalOfAMessageIsKnown(): void
+    {
+        $examples = self::examples('/messages', 'post', '422');
+        ksort($examples);
+
+        $this->assertSame(['link_domain_not_approved', 'sender_not_approved'], array_keys($examples));
     }
 
     public function testEveryDocumentedRefusalOfAVerificationCodeIsReported(): void

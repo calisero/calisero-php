@@ -43,6 +43,12 @@ class CreateMessageRequest
         return $this->recipient;
     }
 
+    /**
+     * The text of the message. On an account restricted to its approved link
+     * domains, every link in it (with or without https://) must go to one of
+     * them: any other is refused with a ValidationException on `body` that
+     * names the domain, and nothing is sent or billed, sandbox included.
+     */
     public function getBody(): string
     {
         return $this->body;

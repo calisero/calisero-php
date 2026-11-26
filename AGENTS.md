@@ -173,6 +173,10 @@ everything that happened to that request.
   ("The sender is invalid or is not approved."), and nothing is sent or billed. Leave `sender` out for the default
   sender. It cannot receive replies. Never take it from user input. OTP codes go out from the shared "Verify" sender
   and need no sender of your own.
+- **Links**: an account restricted to its approved link domains may link only to them. Any other link in `body`,
+  with or without `https://`, is refused with a `ValidationException` on `body` that names the domain, and nothing is
+  sent or billed, sandbox included. Domains are requested in the dashboard (Messages › Link domains). Never build a
+  link from user input; a scheduled message whose domain is revoked before it is due fails (error code 1005).
 - **Scheduling**: `scheduleAt` is `Y-m-d H:i:s` in Romania time (Europe/Bucharest); an ISO 8601 string is refused.
 - **Webhooks**: answer any 2xx within 2 seconds, do the work afterwards. Only a timeout or a failed connection is
   retried (at most 5 attempts); a non-2xx answer is not. The same update can arrive twice and out of order: key your
@@ -180,8 +184,9 @@ everything that happened to that request.
   http(s) URL: private, loopback and link-local addresses are refused, and redirects are not followed. Calisero does
   not sign callbacks, hence the token in the URL.
 - **429 has two meanings**: the request rate limit (240 requests a minute; retry after `getRetryAfter()`) and the
-  daily sending limit (`DailyLimitExceededException`: nothing sent, retrying the same day will not help; it resets at
-  midnight, Romania time, `getResetsAt()`). Created messages and verifications report `X-Daily-Limit` /
+  daily sending limit (50 messages a day for a new account; `DailyLimitExceededException`: nothing sent, retrying the
+  same day will not help; it resets at midnight, Romania time, `getResetsAt()`). Created messages and verifications
+  report `X-Daily-Limit` /
   `X-Daily-Remaining` in `getResponseMeta()`.
 - **No idempotency key**: the API takes none yet. `SmsClient::create()` adds an `Idempotency-Key` header to every
   create, but it does not make a retry safe. The library never retries; do not retry `messages()->create()` blindly
